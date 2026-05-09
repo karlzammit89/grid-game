@@ -26,6 +26,11 @@ ESPN_LOGOS = {
     "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
 
+# New Data for your requested templates
+STADIUM_COUNTRIES = ["England", "Spain", "Germany", "Italy", "France", "Portugal", "Brazil", "Argentina", "Mexico"]
+
+KIT_COLORS = ["Red", "Blue", "White", "Yellow", "Black & White"]
+
 def get_club_logo_html(text):
     html = ""
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
@@ -42,7 +47,12 @@ def get_club_logo_html(text):
 def clean_text_and_add_assets(text):
     clean_text = text.strip()
     flag_html = ""
-    for word, iso in COUNTRY_DATA.items():
+    # Add flag if country name or nationality is in text
+    search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
+                   "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
+                   "Argentina": "ar", "Mexico": "mx"}
+    
+    for word, iso in search_pool.items():
         if word.lower() in clean_text.lower():
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
@@ -64,7 +74,10 @@ def generate_random_task():
         lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
-        lambda: f"Name a manager who managed {random.choice(manager_clubs)}"
+        lambda: f"Name a manager who managed {random.choice(manager_clubs)}",
+        # NEW TEMPLATES
+        lambda: f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}",
+        lambda: f"Name a football team whose primary home kit color is {random.choice(KIT_COLORS)}"
     ]
     return random.choice(templates)()
 
@@ -86,18 +99,15 @@ if 'game_started' not in st.session_state:
 def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
-    
     unique_tasks = set()
     required_tasks = total_sq - 2
     
     attempts = 0
     while len(unique_tasks) < required_tasks and attempts < 1000:
         new_task = generate_random_task()
-        # Sort club names in 'both' tasks to prevent "A & B" and "B & A" duplicates
         if "both" in new_task:
             parts = new_task.split("both ")[1].split(" & ")
             new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
-        
         unique_tasks.add(new_task)
         attempts += 1
     
@@ -200,7 +210,7 @@ else:
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
-
+        
         st.markdown("---")
         if not st.session_state.confirm_reset:
             if st.button("🚩 End Match", use_container_width=True):
