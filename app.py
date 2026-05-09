@@ -382,30 +382,37 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- UPDATED VIEW ANSWERS SIDEBAR ---
-            # Ensure all these lines are indented exactly the same (usually 8 spaces or 2 tabs)
-        all_answers = get_answer_logic(task_text)
-        n = len(all_answers)
+            # --- SIDEBAR TASK & ANSWERS SECTION ---
+else:
+    # 1. Define the task first so other functions can see it
+    task_text = st.session_state.grid_map[player['pos']]['task']
+    st.info(f"Task: {task_text}")
+    
+    # 2. Get the list of answers from your engine
+    all_answers = get_answer_logic(task_text)
+    n = len(all_answers)
 
-        with st.expander(f"👁️ View Answers ({n})"):
-            if n > 0:
-                # Join into clean rows with bullet points
-                formatted_rows = "\n".join([f"* {item}" for item in all_answers])
-                st.markdown(formatted_rows)
-            else:
-                st.write("No answers found in database.")
-
-        st.markdown("---")
-        
-        if not st.session_state.confirm_reset:
-            if st.button("🚩 End Game", use_container_width=True): 
-                st.session_state.confirm_reset = True
-                st.rerun()
+    # 3. Display the View Answers expander with the count (n)
+    with st.expander(f"👁️ View Answers ({n})"):
+        if n > 0:
+            # Join answers into clean rows with bullet points
+            formatted_rows = "\n".join([f"* {item}" for item in all_answers])
+            st.markdown(formatted_rows)
         else:
-            st.warning("Confirm Reset?")
-            rc1, rc2 = st.columns(2)
-            if rc1.button("Confirm", type="primary", use_container_width=True): 
-                reset_all_data()
-            if rc2.button("Cancel", use_container_width=True): 
-                st.session_state.confirm_reset = False
-                st.rerun()
+            st.write("No answers found in database.")
+
+    st.markdown("---")
+    
+    # --- GAME CONTROLS ---
+    if not st.session_state.confirm_reset:
+        if st.button("🚩 End Game", use_container_width=True): 
+            st.session_state.confirm_reset = True
+            st.rerun()
+    else:
+        st.warning("Confirm Reset?")
+        rc1, rc2 = st.columns(2)
+        if rc1.button("Confirm", type="primary", use_container_width=True): 
+            reset_all_data()
+        if rc2.button("Cancel", use_container_width=True): 
+            st.session_state.confirm_reset = False
+            st.rerun()
