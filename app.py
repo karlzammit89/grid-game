@@ -32,8 +32,8 @@ ESPN_LOGOS = {
     "Atletico Madrid": "1068", "Sevilla": "243", "Villarreal": "102", "AC Milan": "103", 
     "Juventus": "111", "Inter Milan": "110", "AS Roma": "104", "Napoli": "114", 
     "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", "PSG": "160", 
-    "Marseille": "176", "Monaco": "174", "Ajax": "148", "PSV Eindhoven": "149", 
-    "PSV": "149", "Feyenoord": "151", "Benfica": "190", "Porto": "437", "Sporting CP": "193"
+    "Marseille": "176", "Monaco": "174", "Ajax": "139", "PSV Eindhoven": "148", 
+    "PSV": "149", "Feyenoord": "151", "Benfica": "1929", "Porto": "434", "Sporting CP": "199"
 }
 
 VALID_CLUB_PAIRS = list(ESPN_LOGOS.keys())
