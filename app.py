@@ -62,15 +62,14 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 @st.cache_data(show_spinner=False)
 def get_answer_logic(task_text):
     t_lower = task_text.lower()
+    ans_list = []
     
-    # --- 1. CLUB CONNECTIONS (Scraper) ---
+    # --- 1. CLUB CONNECTIONS ---
     if "both" in t_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
-            shared = fetch_shared_players(c1, c2) 
-            # Join with newline and bullet points
-            return "**Players for both clubs:**\n\n" + "\n".join([f"* {p}" for p in shared]) if shared else "No connection data found."
+            ans_list = fetch_shared_players(c1, c2)
 
     # --- 2. TROPHIES ---
     TROPHY_DATA = {
@@ -83,11 +82,10 @@ def get_answer_logic(task_text):
         "serie a": ["Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"],
         "bundesliga": ["Bayern Munich", "Dortmund", "Mönchengladbach", "Werder Bremen", "Hamburger SV", "Stuttgart", "Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nürnberg", "Eintracht Braunschweig", "Bayer Leverkusen"]
     }
-
-    if "won" in t_lower or "winner" in t_lower:
+    if not ans_list and ("won" in t_lower or "winner" in t_lower):
         for trophy, winners in TROPHY_DATA.items():
             if trophy in t_lower:
-                return f"**All Previous Winners:**\n\n" + "\n".join([f"* {w}" for w in winners])
+                ans_list = winners
 
     # --- 3. STADIUMS ---
     STADIUM_DATA = {
@@ -97,11 +95,10 @@ def get_answer_logic(task_text):
         "italy": ["San Siro", "Stadio Olimpico", "Juventus Stadium", "Stadio Diego Armando Maradona", "Stadio Luigi Ferraris", "Stadio Artemio Franchi"],
         "france": ["Stade de France", "Parc des Princes", "Stade Vélodrome", "Groupama Stadium", "Stade Pierre-Mauroy", "Matmut Atlantique"]
     }
-
-    if "stadium" in t_lower:
+    if not ans_list and "stadium" in t_lower:
         for country, stadiums in STADIUM_DATA.items():
             if country in t_lower:
-                return f"**Stadiums in {country.title()}:**\n\n" + "\n".join([f"* {s}" for s in stadiums])
+                ans_list = stadiums
 
     # --- 4. KITS ---
     KIT_DATA = {
@@ -112,13 +109,12 @@ def get_answer_logic(task_text):
         "green": ["Celtic", "Sporting CP", "Real Betis", "Sassuolo", "Palmeiras", "Saint-Étienne", "Werder Bremen", "Wolfsburg"],
         "black": ["Eintracht Frankfurt", "Boavista", "PAOK", "Besiktas"]
     }
-
-    if "kit color" in t_lower:
+    if not ans_list and "kit color" in t_lower:
         for color, teams in KIT_DATA.items():
             if color in t_lower:
-                return f"**Teams with {color.title()} kits:**\n\n" + "\n".join([f"* {t}" for t in teams])
+                ans_list = teams
 
-    return "No instant data found."
+    return ans_list
 
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
@@ -384,12 +380,18 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- ANSWERS SECTION (Buttons Removed) ---
-            with st.expander("👁️ View Answers"):
-                # Get the comprehensive list of text answers
-                ans_result = get_answer_logic(task_text)
-                st.markdown(ans_result)
-                # Note: All <a> tags and button blocks have been removed from this section.
+            # --- UPDATED VIEW ANSWERS SIDEBAR ---
+            # Get the raw list of answers
+            all_answers = get_answer_logic(task_text)
+            n = len(all_answers)
+            
+            with st.expander(f"👁️ View Answers ({n})"):
+                if n > 0:
+                    # Renders each answer on its own row with a bullet point
+                    formatted_rows = "\n".join([f"* {item}" for item in all_answers])
+                    st.markdown(formatted_rows)
+                else:
+                    st.write("No answers found in database.")
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
