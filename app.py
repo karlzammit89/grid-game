@@ -1,19 +1,10 @@
-chromium
-    chromium-driver
-    ```
-
----
-
-### The Complete Script (`football_grid.py`)
-
-```python
 import streamlit as st
 import ScraperFC
 import pandas as pd
 import random
 import re
 
-# --- 1. DATA MAPPING ---
+# --- 1. DATA MAPPING & ASSETS ---
 COUNTRY_DATA = {
     "French": "fr", "Spanish": "es", "English": "gb-eng", "Portuguese": "pt",
     "Dutch": "nl", "Belgian": "be", "German": "de", "Italian": "it",
@@ -37,78 +28,61 @@ ESPN_LOGOS = {
     "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
 
-STADIUM_COUNTRIES = {"England": "gb-eng", "Spain": "es", "Germany": "de", "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", "Argentina": "ar", "Mexico": "mx"}
 KIT_COLOR_MAP = {"Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"}
 
-# --- 2. SCRAPER & INTERNET LOOKUP ---
+# --- 2. INTERNET LOOKUP ENGINE (ScraperFC) ---
 
 @st.cache_resource
 def get_scraper():
-    """Initializes the ScraperFC FBRef engine."""
+    """Initializes the FBRef scraper engine once."""
     return ScraperFC.FBRef()
 
-@st.cache_data(show_spinner="Scouring the FBRef archives...")
+@st.cache_data(show_spinner="Searching FBRef for players...")
 def get_online_answers(task_text):
-    """Uses ScraperFC to find correct answers on the internet."""
+    """
+    Scrapes FBRef for 'Multiple-Squad Players'.
+    Reference: ScraperFC handles web-scraping for soccer data.
+    """
     scraper = get_scraper()
     t = task_text.lower()
     
     try:
-        # Logic for "Played for both [Club A] & [Club B]"
+        # Regex to extract club names: 'both [Club A] & [Club B]'
         if "played for both" in t:
-            # Matches text between 'both' and '&', and after '&'
             match = re.search(r"both (.*?) & (.*)", t)
             if match:
                 club_a = match.group(1).strip()
                 club_b = match.group(2).strip()
                 
-                # ScraperFC calls the FBRef 'Multiple-Squad Players' table
+                # FBRef provides a specific tool for players who played for multiple clubs.
+                # Note: If get_inter_club_players is not available in the latest ScraperFC,
+                # you may need to use scrape_league_table or scrape_stats.
                 df = scraper.get_inter_club_players(club_a, club_b)
                 return df['Player'].tolist()
-        
-        # Add more scraper-specific logic here if needed for Trophies/Leagues
-        
     except Exception:
         return []
     return []
 
-# --- 3. GRAMMAR & ASSET ENGINES ---
+# --- 3. FORMATTING UTILITIES ---
 
 def grid_text_formatter(text):
     text = text.replace("Name a football team whose", "Football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
     text = re.sub(r"Name a player", "Players", text)
     text = re.sub(r"Name a team", "Teams", text)
-    text = re.sub(r"Name a stadium", "Stadiums", text)
-    text = re.sub(r"Name a manager", "Managers", text)
-    for word in ["players", "teams", "Managers", "Stadiums", "Players", "Teams"]:
+    for word in ["players", "teams", "Managers", "Players", "Teams"]:
         text = text.replace(f"{word} who has", f"{word} who have")
-        text = text.replace(f"{word} that has", f"{word} that have")
     return text
 
 def smart_pluralize(text, count):
     if count <= 1: return text
-    text = text.replace("Name a football team whose", f"Name {count} football teams whose")
-    text = re.sub(r"Name a[n]? (\w+) player", f"Name {count} \\1 players", text)
-    text = re.sub(r"Name a player", f"Name {count} players", text)
-    text = re.sub(r"Name a team", f"Name {count} teams", text)
-    text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
-    text = re.sub(r"Name a manager", f"Name {count} managers", text)
-    text = text.replace("players who has", "players who have")
-    text = text.replace("teams that has", "teams that have")
+    text = text.replace("Name a player", f"Name {count} players")
+    text = text.replace("Name a team", f"Name {count} teams")
     return text
-
-def articulate_task(subject_type, target, action="played for"):
-    clean_target = target.replace("Name a player who ", "").replace("won ", "").replace("has won ", "").replace("the ", "")
-    article = "an" if subject_type[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-    needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", "Europa League", "World Cup", "Euros", "Copa America"]
-    final_target = f"the {clean_target}" if clean_target in needs_the else clean_target
-    if subject_type == "player": return f"Name a player who {action} {final_target}"
-    return f"Name {article} {subject_type} player who {action} {final_target}"
 
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
-    clean_text = re.sub(r'[^\w\s]', '', text).lower()
+    clean_text = text.lower()
     if "won" in clean_text: assets["emojis"].append("🏆")
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text: assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
@@ -116,17 +90,17 @@ def get_assets(text):
         if club.lower() in clean_text: assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{eid}.png")
     return assets
 
-def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
+def format_header_icons(assets):
     html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    for e in list(dict.fromkeys(assets["emojis"])): html += f'<span style="font-size:{size_emojis};">{e}</span>'
-    for f in assets["flags"]: html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
-    for l in assets["logos"]: html += f'<img src="{l}" style="height:{size_logos};">'
+    for e in assets["emojis"]: html += f'<span>{e}</span>'
+    for f in assets["flags"]: html += f'<img src="{f}" style="height:12px;">'
+    for l in assets["logos"]: html += f'<img src="{l}" style="height:22px;">'
     return html + '</div>'
 
-# --- 4. GAME LOGIC ---
+# --- 4. GAME ENGINE ---
 
 def generate_random_task(categories):
-    clubs_list = list(ESPN_LOGOS.keys())
+    clubs = list(ESPN_LOGOS.keys())
     pool = []
     if "Club Connections" in categories: pool.extend([1, 2])
     if "Kits" in categories: pool.append(3)
@@ -134,10 +108,10 @@ def generate_random_task(categories):
     
     rtype = random.choice(pool) if pool else 1
     if rtype == 1:
-        pair = random.sample(clubs_list, 2)
+        pair = random.sample(clubs, 2)
         return f"Name a player who played for both {pair[0]} & {pair[1]}"
     elif rtype == 2:
-        return articulate_task(random.choice(["Brazilian", "French", "Spanish", "German"]), random.choice(clubs_list))
+        return f"Name a {random.choice(['Brazilian', 'French', 'Spanish'])} player who played for {random.choice(clubs)}"
     elif rtype == 3:
         return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
     else:
@@ -145,70 +119,68 @@ def generate_random_task(categories):
 
 def start_game():
     total_sq = st.session_state.grid_size ** 2
-    board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
-    unique_tasks = set()
-    while len(unique_tasks) < (total_sq - 2):
-        unique_tasks.add(generate_random_task(st.session_state.selected_categories))
-    for task_text in list(unique_tasks):
-        board.append({"task": task_text, "assets": get_assets(task_text)})
-    board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
+    board = [{"task": "START", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
+    tasks = [generate_random_task(st.session_state.selected_categories) for _ in range(total_sq - 2)]
+    for t in tasks: board.append({"task": t, "assets": get_assets(t)})
+    board.append({"task": "FINISH", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
     st.session_state.grid_map = board
-    st.session_state.player_data = {i: {"pos": 0, "prev": 0, "name": st.session_state.player_names[i] or f"Manager {i+1}", "initials": (st.session_state.player_names[i][:2] if st.session_state.player_names[i] else f"M{i+1}").upper(), "color": ["#FF4B4B", "#1C83E1", "#00C04A", "#FFD700"][i]} for i in range(st.session_state.num_players)}
+    st.session_state.player_data = {i: {"pos": 0, "prev": 0, "name": st.session_state.p_names[i] or f"P{i+1}", "color": ["#FF4B4B", "#1C83E1", "#00C04A", "#FFD700"][i]} for i in range(st.session_state.num_players)}
     st.session_state.game_started = True
 
-# --- 5. MAIN UI ---
+# --- 5. UI LAYOUT ---
 
-st.set_page_config(page_title="Football Path Trivia", layout="wide")
+st.set_page_config(page_title="Football Internet Trivia", layout="wide")
 
 if 'game_started' not in st.session_state:
-    st.session_state.update({'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 'grid_map': [], 'winner': None, 'selected_categories': ["Club Connections", "Trophies", "Kits"]})
+    st.session_state.update({'game_started': False, 'grid_size': 4, 'num_players': 2, 'p_names': [], 'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 'grid_map': [], 'selected_categories': ["Club Connections", "Trophies"]})
 
 if not st.session_state.game_started:
     st.title("⚽ Football Grid Setup")
     c1, c2 = st.columns(2)
-    st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
-    st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
-    st.session_state.selected_categories = st.multiselect("Active Categories", ["Club Connections", "Trophies", "Kits"], default=["Club Connections", "Trophies", "Kits"])
-    st.session_state.player_names = [st.text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
-    if st.button("🚀 START MATCH", use_container_width=True): start_game(); st.rerun()
+    st.session_state.grid_size = c1.slider("Grid Dimensions", 3, 5, 4)
+    st.session_state.num_players = c2.slider("Total Players", 1, 4, 2)
+    st.session_state.selected_categories = st.multiselect("Game Categories", ["Club Connections", "Trophies", "Kits"], default=["Club Connections", "Trophies"])
+    st.session_state.p_names = [st.text_input(f"Manager {i+1}", key=f"n{i}") for i in range(st.session_state.num_players)]
+    if st.button("🚀 KICK OFF"): start_game(); st.rerun()
 
 else:
-    player = st.session_state.player_data[st.session_state.turn]
+    curr_p = st.session_state.player_data[st.session_state.turn]
     
-    # Grid Styling
-    st.markdown(f"<style>.grid-container {{ display: grid; gap: 12px; grid-template-columns: repeat({st.session_state.grid_size}, 1fr); }} .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; }} .active-sq {{ border: 3px solid {player['color']}; }} .p-tag {{ border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; border: 1px solid #fff; margin: 1px; color: white; }}</style>", unsafe_allow_html=True)
+    # CSS for Grid
+    st.markdown(f"<style>.grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 8px; padding: 10px; text-align: center; min-height: 140px; }} .active-sq {{ border: 2px solid {curr_p['color']}; box-shadow: 0 0 10px {curr_p['color']}; }}</style>", unsafe_allow_html=True)
 
-    # Render Grid
-    grid_html = '<div class="grid-container">'
+    # Display Grid
+    cols = st.columns(st.session_state.grid_size)
     for i, item in enumerate(st.session_state.grid_map):
-        active = "active-sq" if i == player['pos'] else ""
-        marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        text = grid_text_formatter(item["task"]) if 0 < i < len(st.session_state.grid_map)-1 else item["task"]
-        grid_html += f'<div class="grid-item {active}"><div>#{i:02}</div>{format_header_icons(item["assets"])}<div style="font-size:0.85rem;">{text}</div><div style="height:30px;">{marks}</div></div>'
-    st.markdown(grid_html + "</div>", unsafe_allow_html=True)
+        with cols[i % st.session_state.grid_size]:
+            is_active = "active-sq" if i == curr_p['pos'] else ""
+            st.markdown(f'<div class="grid-item {is_active}">{format_header_icons(item["assets"])}<p style="font-size:0.8rem;">{grid_text_formatter(item["task"])}</p></div>', unsafe_allow_html=True)
 
     # Sidebar Controls
     with st.sidebar:
-        st.markdown(f"<h2 style='color:{player['color']}'>{player['name']}</h2>", unsafe_allow_html=True)
+        st.subheader(f"Current Turn: {curr_p['name']}")
         if not st.session_state.rolled:
-            if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
+            if st.button("🎲 Roll Dice"):
                 st.session_state.current_roll = random.randint(1, 3)
-                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                curr_p['prev'], curr_p['pos'] = curr_p['pos'], min(curr_p['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
                 st.session_state.rolled = True; st.rerun()
         else:
-            task_text = st.session_state.grid_map[player['pos']]['task']
-            display_text = smart_pluralize(task_text, st.session_state.current_roll)
-            st.info(display_text)
+            task = st.session_state.grid_map[curr_p['pos']]['task']
+            st.info(smart_pluralize(task, st.session_state.current_roll))
             
             # --- LIVE INTERNET ANSWERS ---
-            if 0 < player['pos'] < len(st.session_state.grid_map)-1:
-                ans_list = get_online_answers(task_text)
-                with st.expander(f"👁️ Show Solutions ({len(ans_list)} found)"):
-                    if ans_list:
-                        for name in ans_list: st.write(f"• {name}")
+            if 0 < curr_p['pos'] < len(st.session_state.grid_map)-1:
+                results = get_online_answers(task)
+                with st.expander(f"👁️ View Potential Answers ({len(results)})"):
+                    if results:
+                        st.write(", ".join(results[:15])) # Show top 15
                     else:
-                        st.write("No matching players found on FBRef.")
+                        st.write("No direct matches found. Any valid player counts!")
 
-            c1, c2 = st.columns(2)
-            if c1.button("✅ Success", use_container_width=True): st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players; st.session_state.rolled = False; st.rerun()
-            if c2.button("❌ Fail", use_container_width=True): player['pos'] = player['prev']; st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players; st.session_state.rolled = False; st.rerun()
+            if st.button("✅ Success"): 
+                st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                st.session_state.rolled = False; st.rerun()
+            if st.button("❌ Fail (Go Back)"):
+                curr_p['pos'] = curr_p['prev']
+                st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                st.session_state.rolled = False; st.rerun()
