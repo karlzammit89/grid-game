@@ -120,7 +120,6 @@ def generate_random_task():
     clubs_list = list(ESPN_LOGOS.keys())
     leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
-    # Filter based on user settings
     enabled = st.session_state.selected_categories
     pool = []
     if "Club Connections" in enabled: pool.extend([1, 2, 3])
@@ -129,7 +128,7 @@ def generate_random_task():
     if "Trophies" in enabled: pool.extend([6, 7, 8, 9])
     if "N+ Stats" in enabled: pool.extend([10, 11])
     
-    if not pool: pool = [1, 2, 6, 9] # Fallback
+    if not pool: return "Select at least one category"
     
     template_type = random.choice(pool)
     
@@ -163,7 +162,6 @@ def generate_random_task():
         return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
     elif template_type == 6:
         comp = random.choice(leagues_comps + ["Euros", "Copa America"])
-        # FIX: Added "the" logic for Serie A/La Liga within winners
         needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", "Europa League", "World Cup", "Euros", "Copa America", "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
         target = f"the {comp}" if comp in needs_the else comp
         return f"Name a team that has won {target}"
@@ -195,9 +193,14 @@ def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     unique_tasks = set()
-    while len(unique_tasks) < (total_sq - 2):
+    
+    # Simple limit to prevent infinite loops if pool is too small
+    attempts = 0
+    while len(unique_tasks) < (total_sq - 2) and attempts < 1000:
         new_task = generate_random_task()
         unique_tasks.add(new_task)
+        attempts += 1
+        
     for task_text in list(unique_tasks):
         board.append({"task": task_text, "assets": get_assets(task_text)})
     board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🏆"]}})
@@ -229,9 +232,20 @@ elif not st.session_state.game_started:
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
             default=st.session_state.selected_categories)
+        
+        # CATEGORY VALIDATION
+        if not st.session_state.selected_categories:
+            st.error("Please select at least one category to generate questions.")
+            can_start = False
+        else:
+            can_start = True
+
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
-    if st.button("🚀 START MATCH", use_container_width=True, type="primary"): start_game(); st.rerun()
+    
+    if st.button("🚀 START MATCH", use_container_width=True, type="primary", disabled=not can_start):
+        start_game()
+        st.rerun()
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
@@ -288,5 +302,9 @@ else:
                 st.session_state.confirm_reset = True; st.rerun()
         else:
             st.warning("Confirm Reset?")
-            if st.button("Confirm Reset", type="primary"): reset_all_data()
-            if st.button("Cancel"): st.session_state.confirm_reset = False; st.rerun()
+            rc1, rc2 = st.columns(2)
+            if rc1.button("Confirm", type="primary", use_container_width=True):
+                reset_all_data()
+            if rc2.button("Cancel", use_container_width=True):
+                st.session_state.confirm_reset = False
+                st.rerun()
