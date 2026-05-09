@@ -72,7 +72,6 @@ def get_answer_logic(task_text):
             ans_list = fetch_shared_players(c1, c2)
 
     # --- 2. EXPANDED TROPHY DATA (All Historical Winners) ---
-    # Includes Pre-Bundesliga German Champions and full historical records
     TROPHY_DATA = {
         "bundesliga": ["Bayern Munich", "Borussia Dortmund", "Borussia Mönchengladbach", "Werder Bremen", "Hamburger SV", "VfB Stuttgart", "FC Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nuremberg", "Eintracht Braunschweig", "Bayer Leverkusen", "Schalke 04", "Hertha BSC", "Rapid Vienna", "Mannheim", "Dresdner SC", "Hannover 96", "Fortuna Düsseldorf", "SpVgg Fürth", "Viktoria 89 Berlin", "Union Berlin", "Holstein Kiel", "Karlsruher FV", "Phönix Karlsruhe", "Freiburger FC"],
         "premier league": ["Manchester United", "Liverpool", "Arsenal", "Manchester City", "Everton", "Aston Villa", "Chelsea", "Sunderland", "Newcastle United", "Sheffield Wednesday", "Blackburn Rovers", "Huddersfield Town", "Leeds United", "Wolverhampton Wanderers", "Burnley", "Derby County", "Preston North End", "Portsmouth", "Tottenham Hotspur", "Ipswich Town", "Leicester City", "Nottingham Forest", "Sheffield United", "West Bromwich Albion"],
@@ -87,9 +86,6 @@ def get_answer_logic(task_text):
         for trophy, winners in TROPHY_DATA.items():
             if trophy in t_lower:
                 ans_list = winners
-
-    # --- 3. STADIUMS & KITS (Optional: Can keep previous logic) ---
-    # (Existing stadium and kit data blocks here)
 
     return ans_list
 
