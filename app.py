@@ -28,39 +28,20 @@ def clean_text_and_add_flag(text):
 
 # --- 2. STRUCTURED LOGIC GENERATOR ---
 def generate_final_challenge():
-    """Generates a logic-checked high-difficulty question."""
-    
-    # Pools of logical data
     big_clubs = ["Real Madrid", "Barcelona", "Man Utd", "Liverpool", "Bayern Munich", "AC Milan", "Juventus", "Chelsea", "Inter Milan", "PSG", "Arsenal", "Man City"]
     nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
     leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
     templates = [
-        # Player Transfer Logic
         lambda: f"Name 3 players who have played for both {random.choice(big_clubs)} and {random.choice([c for c in big_clubs if c != 'Real Madrid'])}.",
-        
-        # Nationality & League Logic
         lambda: f"Name 4 {random.choice(nations)}n players who have won the {random.choice(leagues)}.",
-        
-        # National Team Achievement
-        lambda: f"Name 3 nations that have won {random.choice(['the World Cup', 'their Continental Cup (Euro/AFCON/etc)', 'the Confederations Cup'])} at least twice.",
-        
-        # Manager Logic
+        lambda: f"Name 3 nations that have won {random.choice(['the World Cup', 'their Continental Cup', 'the Confederations Cup'])} at least twice.",
         lambda: f"Name 3 managers who have won the {random.choice(['Champions League', 'Premier League', 'World Cup', 'La Liga'])}.",
-        
-        # Club Achievement Logic
         lambda: f"Name 4 clubs that have won the {random.choice(['Champions League', 'Europa League', 'Cup Winners Cup'])} at least once.",
-        
-        # City/Stadium Logic (Simplified to ensure existence)
         lambda: f"Name 3 stadiums located in {random.choice(['London', 'Madrid', 'Paris', 'Manchester', 'Lisbon', 'Rio de Janeiro'])}.",
-        
-        # Stat-based Logic
         lambda: f"Name 4 players who have scored {random.choice(['a hat-trick in the UCL', 'in a World Cup Final', '50+ goals for their country', 'over 150 Premier League goals'])}.",
-        
-        # Multi-Title Winners
-        lambda: f"Name 3 players who have won the {random.choice(['Champions League', 'World Cup'])} with two different {random.choice(['clubs', 'nationalities (if dual)'] if 'World Cup' not in _ else ['clubs'])}."
+        lambda: f"Name 3 players who have won the {random.choice(['Champions League', 'World Cup'])} with two different clubs."
     ]
-    
     return random.choice(templates)()
 
 CRITERIA_POOL = [
@@ -91,7 +72,14 @@ CRITERIA_POOL = [
     "Name a Belgian player who has played in the Premier League"
 ]
 
-# --- 3. STATE MANAGEMENT ---
+# --- 3. STATE REFRESH LOGIC ---
+def reset_all_data():
+    """Wipes all session state to ensure a clean start."""
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+# Initialize basic state if not present
 if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4,
@@ -118,7 +106,6 @@ def start_game():
         } for i in range(st.session_state.num_players)
     }
     st.session_state.game_started = True
-    st.session_state.winner = None
 
 # --- 4. UI ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
@@ -126,10 +113,8 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 if st.session_state.winner:
     st.balloons()
     st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
-    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
-        st.session_state.game_started = False
-        st.session_state.winner = None
-        st.rerun()
+    if st.button("🏟️ Return to Menu & Refresh Data", use_container_width=True, type="primary"):
+        reset_all_data()
 
 elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
@@ -175,11 +160,8 @@ else:
                 st.session_state.current_roll = random.randint(1, 3)
                 new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 player['prev'], player['pos'] = player['pos'], new_pos
-                
-                # Logic-checked generation
                 if player['pos'] == last_sq_index:
                     st.session_state.active_final_task = generate_final_challenge()
-                
                 st.session_state.rolled = True
                 st.rerun()
         else:
@@ -221,12 +203,10 @@ else:
                 st.session_state.confirm_reset = True
                 st.rerun()
         else:
-            st.error("Quit Game?")
+            st.error("Quit and Clear Data?")
             cy, cn = st.columns(2)
             if cy.button("Yes", use_container_width=True, type="primary"):
-                st.session_state.game_started = False
-                st.session_state.confirm_reset = False
-                st.rerun()
+                reset_all_data()
             if cn.button("No", use_container_width=True):
                 st.session_state.confirm_reset = False
                 st.rerun()
