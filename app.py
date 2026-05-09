@@ -44,8 +44,7 @@ def articulate_task(subject_type, target, action="played for"):
                  "Europa League", "World Cup", "Euros", "Copa America", 
                  "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
     
-    # Ensure target isn't already a full sentence
-    clean_target = target.replace("Name a player who played for ", "").replace("the ", "")
+    clean_target = target.replace("the ", "")
     final_target = f"the {clean_target}" if clean_target in needs_the else clean_target
     
     if subject_type == "player":
@@ -66,11 +65,10 @@ def get_assets(text):
         if nation.lower() in clean_text:
             assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
             
-    sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
-    for club in sorted_clubs:
+    for club, eid in ESPN_LOGOS.items():
         if club.lower() in clean_text:
-            assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{ESPN_LOGOS[club]}.png")
-            break # Only one logo per task to keep it clean
+            assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{eid}.png")
+            break
 
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
     return assets
@@ -100,7 +98,7 @@ def generate_random_task(categories, hard_mode=False):
     if "Trophies" in categories: pool.extend([6, 7])
     if "N+ Stats" in categories: pool.extend([10, 11])
     
-    if not pool: return "Name a famous retired footballer"
+    if not pool: return "Name a legendary footballer"
     template_type = random.choice(pool)
     
     if template_type == 10:
@@ -119,7 +117,7 @@ def generate_random_task(categories, hard_mode=False):
     elif template_type == 11:
         nation = random.choice(["English", "Spanish", "French", "Brazilian", "German"])
         comp = random.choice(["Premier League", "La Liga", "Bundesliga"])
-        n_val = 120 if hard_mode else 50
+        n_val = 125 if hard_mode else 50
         target = f"the {comp}" if comp == "Premier League" else comp
         return f"Name a {nation} player who has {n_val}+ goals in {target}"
     
@@ -190,7 +188,8 @@ elif not st.session_state.game_started:
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
-            default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"])
+            default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"],
+            key="cat_filter")
 
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
@@ -227,6 +226,7 @@ else:
                     st.session_state.rolled = True
                     st.rerun()
         else:
+            # Persistent task logic
             if is_at_finish and st.session_state.active_final_task:
                 st.markdown("<div style='text-align:center; color:#FFD700; font-weight:bold;'>🌟 BONUS QUESTION 🌟</div>", unsafe_allow_html=True)
                 task_to_show = st.session_state.active_final_task
@@ -235,8 +235,12 @@ else:
                 task_to_show = st.session_state.grid_map[player['pos']]
 
             with st.container(border=True):
-                st.markdown(format_header_icons(task_to_show['assets'], size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
-                st.markdown(f"<div style='text-align:center; font-weight:600;'>{task_to_show['text'] if 'text' in task_to_show else task_to_show['task']}</div>", unsafe_allow_html=True)
+                # Safe access using .get() to prevent dict key errors
+                assets = task_to_show.get('assets', {})
+                st.markdown(format_header_icons(assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
+                
+                label = task_to_show.get('text') or task_to_show.get('task')
+                st.markdown(f"<div style='text-align:center; font-weight:600;'>{label}</div>", unsafe_allow_html=True)
             
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
@@ -252,4 +256,16 @@ else:
                 st.rerun()
 
         st.markdown("---")
-        if st.button("🚩 End Game", use_container_width=True): reset_all_data()
+        # --- RESET CONFIRMATION UI ---
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Game", use_container_width=True):
+                st.session_state.confirm_reset = True
+                st.rerun()
+        else:
+            st.warning("Confirm Reset?")
+            rc1, rc2 = st.columns(2)
+            if rc1.button("Confirm", type="primary", use_container_width=True):
+                reset_all_data()
+            if rc2.button("Cancel", use_container_width=True):
+                st.session_state.confirm_reset = False
+                st.rerun()
