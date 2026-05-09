@@ -4,6 +4,7 @@ import re
 import pandas as pd
 
 # --- 1. DATA MAPPING ---
+# IDs added for the lookup engine to work with specific clubs
 CLUB_IDS = {
     "Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", 
     "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Tottenham": "3ad23a75",
@@ -93,18 +94,14 @@ def get_assets(text):
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    for e in list(dict.fromkeys(assets["emojis"])):
-        html += f'<span style="font-size:{size_emojis};">{e}</span>'
-    for f in assets["flags"]:
-        html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
-    for l in assets["logos"]:
-        html += f'<img src="{l}" style="height:{size_logos};">'
-    if not any(assets.values()):
-        return html + f'<span style="font-size:{size_emojis};">⚽</span></div>'
+    for e in list(dict.fromkeys(assets["emojis"])): html += f'<span style="font-size:{size_emojis};">{e}</span>'
+    for f in assets["flags"]: html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
+    for l in assets["logos"]: html += f'<img src="{l}" style="height:{size_logos};">'
+    if not any(assets.values()): return html + f'<span style="font-size:{size_emojis};">⚽</span></div>'
     return html + '</div>'
 
 # --- 4. DYNAMIC LOGIC ---
-def generate_random_task():
+def generate_random_task(categories):
     clubs_list = list(CLUB_IDS.keys())
     pool = [1, 1, 2, 4, 5, 6] 
     template_type = random.choice(pool)
@@ -130,14 +127,15 @@ if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
         'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'winner': None
+        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None,
+        'selected_categories': ["Club Connections", "Trophies", "Stadiums", "Kits"]
     })
 
 def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     for _ in range(total_sq - 2):
-        t = generate_random_task()
+        t = generate_random_task(st.session_state.selected_categories)
         board.append({"task": t, "assets": get_assets(t)})
     board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
     st.session_state.grid_map = board
@@ -156,7 +154,7 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"<div style='text-align:center; padding:100px;'><h1 style='font-size:5rem;'>🥇</h1><h2 style='color:{st.session_state.winner['color']};'>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; padding:100px;'><h1>🥇</h1><h2>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
     if st.button("🏟️ Return to Menu", use_container_width=True): reset_all_data()
 
 elif not st.session_state.game_started:
@@ -188,7 +186,7 @@ else:
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
-        st.markdown(f"<h3 style='text-align:center; color:{player['color']}; margin-top: -30px; margin-bottom: 10px;'>{player['name']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align:center; color:{player['color']};'>{player['name']}</h3>", unsafe_allow_html=True)
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
@@ -198,6 +196,16 @@ else:
             task = st.session_state.grid_map[player['pos']]['task']
             st.info(smart_pluralize(task, st.session_state.current_roll))
             
+            # --- ANSWERS DROPDOWN ---
+            if "both" in task.lower():
+                match = re.search(r"both (.*?) & (.*)", task)
+                if match:
+                    c1, c2 = match.group(1), match.group(2)
+                    ans_list = fetch_shared_players(c1, c2)
+                    with st.expander(f"👁️ Possible Answers ({len(ans_list)})"):
+                        if ans_list: st.write(", ".join(ans_list))
+                        else: st.write("No players found in database.")
+
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
                 if player['pos'] == len(st.session_state.grid_map)-1: st.session_state.winner = player
@@ -210,16 +218,5 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
-            
-            # --- ANSWERS DROPDOWN ---
-            if "both" in task.lower():
-                match = re.search(r"both (.*?) & (.*)", task)
-                if match:
-                    c1_name, c2_name = match.group(1), match.group(2)
-                    ans_list = fetch_shared_players(c1_name, c2_name)
-                    with st.expander(f"👁️ View Answers ({len(ans_list)})"):
-                        if ans_list: st.write(", ".join(ans_list))
-                        else: st.write("No direct database matches found.")
 
-        st.markdown("---")
         if st.button("🚩 End Game", use_container_width=True): reset_all_data()
