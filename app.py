@@ -44,7 +44,7 @@ if 'game_started' not in st.session_state:
         'game_started': False, 'grid_size': 4, 'max_dice': 3,
         'num_players': 2, 'player_names': [], 'player_data': {},
         'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False
+        'grid_map': [], 'confirm_reset': False, 'winner': None
     })
 
 def start_game():
@@ -64,11 +64,28 @@ def start_game():
         } for i in range(st.session_state.num_players)
     }
     st.session_state.game_started = True
+    st.session_state.winner = None
 
 # --- 4. UI ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
-if not st.session_state.game_started:
+# CHECK FOR WINNER FIRST
+if st.session_state.winner:
+    st.balloons()
+    st.markdown(f"""
+        <div style="text-align:center; padding:100px;">
+            <h1 style="font-size:5rem;">🏆</h1>
+            <h1 style="font-size:3rem; color:white;">FULL TIME!</h1>
+            <h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2>
+            <p style="font-size:1.5rem; color:#888;">The match has ended. You are the champion!</p>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
+        st.session_state.game_started = False
+        st.session_state.winner = None
+        st.rerun()
+
+elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
         c1, c2, c3 = st.columns(3)
@@ -80,6 +97,7 @@ if not st.session_state.game_started:
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
         start_game()
         st.rerun()
+
 else:
     player = st.session_state.player_data[st.session_state.turn]
     
@@ -104,13 +122,13 @@ else:
     with st.sidebar:
         st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
         
-        # --- LOGIC TO HIDE TRIVIA FOR KICK OFF ---
         is_trivia_sq = player['pos'] != 0 and player['pos'] != (len(st.session_state.grid_map) - 1)
 
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, st.session_state.max_dice)
-                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                new_pos = min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                player['prev'], player['pos'] = player['pos'], new_pos
                 st.session_state.rolled = True
                 st.rerun()
         else:
@@ -129,12 +147,15 @@ else:
                     st.session_state.rolled = False
                     st.rerun()
             else:
-                # If they landed on Final Whistle
-                st.success("Goal! You've reached the end!")
-                if st.button("End Turn", use_container_width=True):
-                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                    st.session_state.rolled = False
+                # Landed on Final Whistle
+                if player['pos'] == len(st.session_state.grid_map) - 1:
+                    st.session_state.winner = player
                     st.rerun()
+                else: # Kick off (only possible if rolling 0 or logic error, but safe to have)
+                    if st.button("End Turn", use_container_width=True):
+                        st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                        st.session_state.rolled = False
+                        st.rerun()
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
@@ -151,6 +172,3 @@ else:
             if rn.button("No", use_container_width=True):
                 st.session_state.confirm_reset = False
                 st.rerun()
-
-    if player['pos'] == len(st.session_state.grid_map) - 1:
-        st.balloons()
