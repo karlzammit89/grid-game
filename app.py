@@ -32,13 +32,6 @@ KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
-# Mapping used ONLY for flags now
-COMPETITION_GEOGRAPHY = {
-    "Champions League": "eu", "Europa League": "eu", "Euros": "eu",
-    "Premier League": "gb-eng", "Championship": "gb-eng", "FA Cup": "gb-eng",
-    "La Liga": "es", "Serie A": "it", "Bundesliga": "de", "Ligue 1": "fr"
-}
-
 TROPHY_WINNERS = {
     "Euros": ["French", "Spanish", "Portuguese", "German", "Italian", "Dutch", "Danish"],
     "Copa America": ["Argentinian", "Brazilian", "Uruguayan", "Colombian"],
@@ -48,37 +41,46 @@ TROPHY_WINNERS = {
 EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "pt", "nl", "be", "de", "it", "hr", "ch", "dk", "tr", "at", "ua", "gb-sct", "se", "gb-wls", "pl", "no"]]
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
-# --- 2. ASSET ENGINE ---
+# --- 2. GRAMMAR & ASSET ENGINES ---
+def articulate_task(subject_type, target, action="played for"):
+    """Handles 'a/an' logic and 'the' prefixing for competitions."""
+    # Handle a/an for subjects (Nationalities)
+    article = "an" if subject_type[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
+    
+    # Handle "the" prefix for specific competitions/targets
+    needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
+                 "Europa League", "World Cup", "Euros", "Copa America", 
+                 "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
+    
+    final_target = f"the {target}" if target in needs_the else target
+    
+    if subject_type == "player":
+        return f"Name a player who {action} {final_target}"
+    return f"Name {article} {subject_type} player who {action} {final_target}"
+
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     clean_text = clean_text_via_regex(text).lower()
     
-    # 1. Strict Trophy Logic: Only "won" triggers the trophy.
-    # No competition specific mapping exists for trophies anymore.
     if "won" in clean_text:
         assets["emojis"].append("🏆")
 
-    # 2. Flag Logic: Scan for competition locations
-    for comp, geo in COMPETITION_GEOGRAPHY.items():
-        if comp.lower() in clean_text:
-            flag_url = f"https://flagcdn.com/w40/{geo}.png"
-            if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-
-    # 3. Nationality Flag Logic: (Ensures multi-flag support)
+    # Nationalities Flag Logic
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
-    # 4. Stadium Flags & Emoji
+    # Stadium Flags
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+    
     if "stadium" in clean_text: 
         assets["emojis"].append("🏟️")
         
-    # 5. Club Logo Logic
+    # Club Logo Logic
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -88,7 +90,6 @@ def get_assets(text):
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
             
-    # 6. Kit Color Emojis
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in clean_text:
             assets["emojis"].append(emoji)
@@ -116,7 +117,7 @@ def generate_random_task():
     all_nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     manager_clubs = ['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan']
-    global_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
+    leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
     template_type = random.randint(1, 9)
     
@@ -125,36 +126,32 @@ def generate_random_task():
         return f"Name a player who played for both {pair[0]} & {pair[1]}"
     elif template_type == 2:
         n = random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Nigerian'])
-        return f"Name a {n} player who played for {random.choice(clubs_list)}"
+        return articulate_task(n, random.choice(clubs_list))
     elif template_type == 3:
-        return f"Name a manager who managed {random.choice(manager_clubs)}"
+        target_club = random.choice(manager_clubs)
+        return f"Name a manager who managed {target_club}"
     elif template_type == 4:
         s_choice = random.choice(list(STADIUM_COUNTRIES.keys()))
         return f"Name a stadium located in {s_choice}"
     elif template_type == 5:
         return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
     elif template_type == 6:
-        comp = random.choice(global_comps + ["Euros", "Copa America"])
-        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
-        return f"Name a team that has won {comp_display}"
+        comp = random.choice(leagues_comps + ["Euros", "Copa America"])
+        target = f"the {comp}" if comp in ["Euros", "Copa America", "World Cup"] or "League" in comp or "Cup" in comp else comp
+        return f"Name a team that has won {target}"
     elif template_type == 7:
-        comp = random.choice(global_comps + ["Euros", "Copa America"])
-        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
-        return f"Name a player who has won {comp_display}"
+        comp = random.choice(leagues_comps + ["Euros", "Copa America"])
+        return articulate_task("player", comp, action="has won")
     elif template_type == 8:
         comp = random.choice(["Euros", "Copa America", "World Cup", "Champions League", "Europa League"])
         valid_nation = random.choice(TROPHY_WINNERS.get(comp, EUROPEANS + SOUTH_AMERICANS))
-        article = "an" if valid_nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-        return f"Name {article} {valid_nation} player who has won {('the ' + comp) if 'Cup' in comp or 'League' in comp else comp}"
+        return articulate_task(valid_nation, comp, action="has won")
     else:
-        comp = random.choice(global_comps + ["Euros", "Copa America"])
+        comp = random.choice(leagues_comps + ["Euros", "Copa America"])
         if comp == "Euros": nation = random.choice(EUROPEANS)
         elif comp == "Copa America": nation = random.choice(SOUTH_AMERICANS)
         else: nation = random.choice(all_nations)
-            
-        article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
-        return f"Name {article} {nation} player who has played in {comp_display}"
+        return articulate_task(nation, comp, action="has played in")
 
 # --- 4. STATE MANAGEMENT & GAME ENGINE ---
 def reset_all_data():
@@ -174,9 +171,6 @@ def start_game():
     unique_tasks = set()
     while len(unique_tasks) < (total_sq - 2):
         new_task = generate_random_task()
-        if "both" in new_task:
-            parts = new_task.split("both ")[1].split(" & ")
-            new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
         unique_tasks.add(new_task)
     for task_text in list(unique_tasks):
         board.append({"task": task_text, "assets": get_assets(task_text)})
