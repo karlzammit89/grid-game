@@ -59,76 +59,6 @@ EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
 # --- 2. ENGINES ---
-
-def get_answer_logic(task_text):
-    """Hardcoded data lookup for Trophies, Stadiums, and Kits."""
-    t_lower = task_text.lower()
-    
-    # --- HARDCODED DATASETS ---
-    TROPHY_DATA = {
-    "bundesliga": [
-        "Bayern Munich", "Borussia Dortmund", "Borussia Mönchengladbach", "Werder Bremen", "Hamburger SV", 
-        "VfB Stuttgart", "FC Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nuremberg", 
-        "Eintracht Braunschweig", "Bayer Leverkusen", "Schalke 04", "Hertha BSC", "Rapid Vienna", 
-        "VfR Mannheim", "Dresdner SC", "Hannover 96", "Fortuna Düsseldorf", "SpVgg Fürth", 
-        "Viktoria 89 Berlin", "Union Berlin", "Holstein Kiel", "Karlsruher FV", "Phönix Karlsruhe", 
-        "Freiburger FC", "VfB Leipzig", "SpVgg Blau-Weiß 1890 Berlin", "Rot-Weiss Essen"
-    ],
-    "premier league": [
-        "Manchester United", "Liverpool", "Arsenal", "Manchester City", "Everton", "Aston Villa", 
-        "Sunderland", "Chelsea", "Newcastle United", "Sheffield Wednesday", "Blackburn Rovers", 
-        "Huddersfield Town", "Leeds United", "Wolverhampton Wanderers", "Burnley", "Derby County", 
-        "Preston North End", "Portsmouth", "Tottenham Hotspur", "Ipswich Town", "Leicester City", 
-        "Nottingham Forest", "Sheffield United", "West Bromwich Albion"
-    ],
-    "la liga": [
-        "Real Madrid", "Barcelona", "Atletico Madrid", "Athletic Bilbao", "Valencia", 
-        "Real Sociedad", "Deportivo La Coruña", "Sevilla", "Real Betis"
-    ],
-    "serie a": [
-        "Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", 
-        "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"
-    ],
-    "champions league": [
-        "Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", 
-        "Manchester United", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Chelsea", "Celtic", 
-        "Hamburg", "Steaua București", "Marseille", "Borussia Dortmund", "Feyenoord", "Aston Villa", 
-        "PSV Eindhoven", "Red Star Belgrade", "Manchester City"
-    ]
-}
-    STADIUM_DATA = {
-    "england": [
-        "Wembley", "Twickenham", "Old Trafford", "Tottenham Hotspur Stadium", "London Stadium", 
-        "Anfield", "Emirates Stadium", "Etihad Stadium", "St James' Park", "Stadium of Light", 
-        "Villa Park", "Stamford Bridge", "Goodison Park", "Hillsborough", "Elland Road", 
-        "Riverside Stadium", "Pride Park", "King Power Stadium", "Bramall Lane", "St Mary's Stadium", 
-        "Molineux", "Falmer Stadium", "Ricoh Arena", "Ewood Park", "City Ground"
-    ],
-    "spain": [
-        "Camp Nou", "Santiago Bernabéu", "Metropolitano", "Benito Villamarín", "Estadi Olímpic Lluís Companys", 
-        "San Mamés", "Mestalla", "Ramón Sánchez Pizjuán", "La Cartuja", "Reale Arena", 
-        "RCDE Stadium", "Abanca-Balaídos", "Gran Canaria", "Martinez Valero", "La Romareda", 
-        "Riazor", "El Molinón", "Nueva Condomina", "Estadi de Son Moix", "Ciutat de València", 
-        "Estadio de la Cerámica", "Nuevo Arcángel", "Nuevo Colombino", "Heliodoro Rodríguez López", "Mendizorroza"
-    ],
-    "germany": [
-        "Signal Iduna Park", "Allianz Arena", "Olympiastadion Berlin", "Veltins-Arena", "Deutsche Bank Park", 
-        "Stuttgart Arena", "Volksparkstadion", "Merkur Spiel-Arena", "RheinEnergieStadion", "Borussia-Park", 
-        "Red Bull Arena", "Fritz-Walter-Stadion", "Weserstadion", "Europa-Park Stadion", "HDI-Arena", 
-        "Max-Morlock-Stadion", "WWK Arena", "PreZero Arena", "Millerntor-Stadion", "Wildparkstadion", 
-        "MDCC-Arena", "Eintracht-Stadion", "Schauinsland-Reisen-Arena", "Home Deluxe Arena", "Ludwigsparkstadion"
-    ]
-}
-
-    # Search logic
-    for league, winners in TROPHY_DATA.items():
-        if league in t_lower: return winners
-    for country, stadiums in STADIUM_DATA.items():
-        if country in t_lower: return stadiums
-    for color, teams in KIT_DATA.items():
-        if color in t_lower: return teams
-    return []
-
 @st.cache_data(show_spinner=False)
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
@@ -394,28 +324,19 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            ## --- UPDATED ANSWERS SECTION ---
-            # 1. Check Hardcoded Data first (Trophies, Stadiums, Kits)
-            hardcoded_ans = get_answer_logic(task_text)
-            
-            # 2. Check Club Connections (Scraper)
-            if not hardcoded_ans and "both" in task_text.lower():
-                match = re.search(r"both (.*?) & (.*)", task_text)
-                if match:
-                    c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
-                    hardcoded_ans = fetch_shared_players(c1_name, c2_name)
-
-            # 3. Dynamic Header with count (n)
-            ans_count = len(hardcoded_ans) if hardcoded_ans else 0
-            with st.expander(f"👁️ View Answers ({ans_count})"):
-                if hardcoded_ans:
-                    # Each answer on its own row
-                    for answer in hardcoded_ans[:15]:
-                        st.write(f"{answer}")
-                else:
-                    st.info("No answers found in database.")
-
-# Link for all questions
+            # --- ANSWERS SECTION ---
+            with st.expander("👁️ View Answers"):
+                if "both" in task_text.lower():
+                    match = re.search(r"both (.*?) & (.*)", task_text)
+                    if match:
+                        c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
+                        ans_list = fetch_shared_players(c1_name, c2_name)
+                        if ans_list: 
+                            st.write(", ".join(ans_list[:15]))
+                        else: 
+                            st.info("No common players found in quick-lookup.")
+                
+                # Link for all questions
                 search_query = task_text.replace("Name a", "").strip()
                 st.markdown(f"""
                 <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
@@ -424,7 +345,7 @@ else:
                     </div>
                 </a>
                 """, unsafe_allow_html=True)
-        
+
         st.markdown("---")
         if not st.session_state.confirm_reset:
             if st.button("🚩 End Game", use_container_width=True): st.session_state.confirm_reset = True; st.rerun()
