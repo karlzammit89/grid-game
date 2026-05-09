@@ -3,38 +3,29 @@ import random
 import re
 
 # --- 1. SMART DATA MAPPING ---
+# Consolidated to primary names to prevent "Tottenham/Spurs" type duplicates
 COUNTRY_DATA = {
-    "French": "fr", "France": "fr", "Spanish": "es", "Spain": "es",
-    "English": "gb-eng", "England": "gb-eng", "Portuguese": "pt", "Portugal": "pt",
-    "Dutch": "nl", "Netherlands": "nl", "Belgian": "be", "Belgium": "be",
-    "German": "de", "Germany": "de", "Italian": "it", "Italy": "it",
-    "Croatian": "hr", "Croatia": "hr", "Swiss": "ch", "Switzerland": "ch",
-    "Danish": "dk", "Denmark": "dk", "Turkish": "tr", "Türkiye": "tr",
-    "Austrian": "at", "Austria": "at", "Ukrainian": "ua", "Ukraine": "ua",
-    "Scottish": "gb-sct", "Scotland": "gb-sct", "Swedish": "se", "Sweden": "se",
-    "Welsh": "gb-wls", "Wales": "gb-wls", "Polish": "pl", "Poland": "pl",
-    "Norwegian": "no", "Norway": "no",
-    "Argentinian": "ar", "Argentina": "ar", "Brazilian": "br", "Brazil": "br",
-    "Colombian": "co", "Colombia": "co", "Uruguayan": "uy", "Uruguay": "uy",
-    "Ecuadorian": "ec", "Ecuador": "ec",
-    "Moroccan": "ma", "Morocco": "ma", "Senegalese": "sn", "Senegal": "sn",
-    "Nigerian": "ng", "Nigeria": "ng", "Egyptian": "eg", "Egypt": "eg",
-    "Ivorian": "ci", "Côte d'Ivoire": "ci", "Algerian": "dz", "Algeria": "dz",
-    "American": "us", "USA": "us", "Mexican": "mx", "Mexico": "mx",
-    "Canadian": "ca", "Canada": "ca", "Japanese": "jp", "Japan": "jp",
-    "South Korean": "kr", "South Korea": "kr", "Australian": "au", "Australia": "au"
+    "French": "fr", "Spanish": "es", "English": "gb-eng", "Portuguese": "pt",
+    "Dutch": "nl", "Belgian": "be", "German": "de", "Italian": "it",
+    "Croatian": "hr", "Swiss": "ch", "Danish": "dk", "Turkish": "tr",
+    "Austrian": "at", "Ukrainian": "ua", "Scottish": "gb-sct", "Swedish": "se",
+    "Welsh": "gb-wls", "Polish": "pl", "Norwegian": "no", "Argentinian": "ar",
+    "Brazilian": "br", "Colombian": "co", "Uruguayan": "uy", "Ecuadorian": "ec",
+    "Moroccan": "ma", "Senegalese": "sn", "Nigerian": "ng", "Egyptian": "eg",
+    "Ivorian": "ci", "Algerian": "dz", "American": "us", "Mexican": "mx",
+    "Canadian": "ca", "Japanese": "jp", "South Korean": "kr", "Australian": "au"
 }
 
+# Cleaned: One key per ID to ensure the generator treats them as unique entities
 ESPN_LOGOS = {
-    "Man Utd": "360", "Manchester United": "360", "Liverpool": "364", "Arsenal": "359", 
-    "Chelsea": "363", "Man City": "382", "Spurs": "367", "Tottenham": "367",
+    "Man Utd": "360", "Liverpool": "364", "Arsenal": "359", 
+    "Chelsea": "363", "Man City": "382", "Tottenham": "367",
     "Aston Villa": "362", "Newcastle": "361", "Real Madrid": "86", "Barcelona": "83", 
     "Atletico Madrid": "1068", "Sevilla": "243", "Villarreal": "102", "AC Milan": "103", 
     "Juventus": "111", "Inter Milan": "110", "AS Roma": "104", "Napoli": "114", 
     "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", "PSG": "160", 
-    "Marseille": "176", "Monaco": "174", 
-    "Ajax": "139", "PSV Eindhoven": "148", "PSV": "148", "Feyenoord": "142", 
-    "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
+    "Marseille": "176", "Monaco": "174", "Ajax": "139", "PSV Eindhoven": "148", 
+    "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
 
 def get_club_logo_html(text):
@@ -63,13 +54,17 @@ def clean_text_and_add_assets(text):
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
-    nation = random.choice(list(COUNTRY_DATA.keys()))
+    # Use list for random selection
+    nations = list(COUNTRY_DATA.keys())
+    clubs_list = list(ESPN_LOGOS.keys())
+    
+    nation = random.choice(nations)
     article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-    clubs = random.sample(list(ESPN_LOGOS.keys()), 2)
+    pair = random.sample(clubs_list, 2)
     
     templates = [
-        lambda: f"Name a player who played for both {clubs[0]} & {clubs[1]}",
-        lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Turkish'])} player who played for {random.choice(list(ESPN_LOGOS.keys()))}",
+        lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
+        lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
         lambda: f"Name a manager who coached {random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan'])}"
     ]
@@ -94,15 +89,21 @@ def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
     
-    # GUARANTEE UNIQUENESS
     unique_tasks = set()
     required_tasks = total_sq - 2
     
-    while len(unique_tasks) < required_tasks:
+    # Safety counter to prevent infinite loops
+    attempts = 0
+    while len(unique_tasks) < required_tasks and attempts < 1000:
         new_task = generate_random_task()
+        # Sort club names in 'both' tasks so "A & B" is same as "B & A"
+        if "both" in new_task:
+            parts = new_task.split("both ")[1].split(" & ")
+            new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
+        
         unique_tasks.add(new_task)
+        attempts += 1
     
-    # Add unique tasks to board with assets
     for task_text in list(unique_tasks):
         board.append({"task": clean_text_and_add_assets(task_text)})
         
