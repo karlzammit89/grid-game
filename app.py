@@ -50,19 +50,11 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
 def grid_text_formatter(text):
-    """Formats text for grid boxes: removes 'Name a', pluralizes, and fixes has/have."""
-    # "Name a French player" -> "French players"
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
-    # "Name a player" -> "Players"
     text = re.sub(r"Name a player", "Players", text)
-    # "Name a team" -> "Teams"
     text = re.sub(r"Name a team", "Teams", text)
-    # "Name a stadium" -> "Stadiums"
     text = re.sub(r"Name a stadium", "Stadiums", text)
-    # "Name a manager" -> "Managers"
     text = re.sub(r"Name a manager", "Managers", text)
-    
-    # Fix grammar: "Players who has" -> "Players who have"
     text = text.replace("players who has", "players who have")
     text = text.replace("Players who has", "Players who have")
     return text
@@ -75,8 +67,6 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
-    
-    # Fix grammar for count > 1: "Name 3 players who has" -> "Name 3 players who have"
     text = text.replace("players who has", "players who have")
     return text
 
@@ -86,22 +76,19 @@ def articulate_task(subject_type, target, action="played for"):
     needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
                  "Europa League", "World Cup", "Euros", "Copa America", 
                  "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
-    
     final_target = f"the {clean_target}" if clean_target in needs_the else clean_target
-    
     if subject_type == "player":
         return f"Name a player who {action} {final_target}"
     return f"Name {article} {subject_type} player who {action} {final_target}"
 
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
-    clean_text = clean_text_via_regex(text).lower()
+    clean_text = re.sub(r'[^\w\s]', '', text).lower()
     if "won" in clean_text: assets["emojis"].append("🏆")
     if "goals" in clean_text: assets["emojis"].append("🥅")
     if "assists" in clean_text: assets["emojis"].append("👟")
     if "clean sheets" in clean_text: assets["emojis"].append("🧤")
     if "bookings" in clean_text: assets["emojis"].append("😵")
-    
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
@@ -111,7 +98,6 @@ def get_assets(text):
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
-    
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -125,9 +111,6 @@ def get_assets(text):
             assets["emojis"].append(emoji)
             break
     return assets
-
-def clean_text_via_regex(text):
-    return re.sub(r'[^\w\s]', '', text)
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
@@ -152,20 +135,15 @@ def generate_random_task(categories):
     if "Kits" in categories: pool.append(5)
     if "Trophies" in categories: pool.extend([6, 7, 8, 9])
     if "N+ Stats" in categories: pool.extend([10, 11])
-    
     if not pool: return "N/A"
     template_type = random.choice(pool)
-    
     if template_type == 10:
         stat = random.choice(list(STAT_THRESHOLDS.keys()))
         scope = random.choice(["Global", "League", "CL"]) if stat != "Bookings" else "Global"
         if scope not in STAT_THRESHOLDS[stat]: scope = "Global"
         n_value = random.choice(STAT_THRESHOLDS[stat][scope])
-        if scope == "Global":
-            return f"Name a player who has {n_value}+ {stat.lower()} in his career"
-        else:
-            comp = "Champions League" if scope == "CL" else random.choice(["Premier League", "La Liga", "Serie A"])
-            return f"Name a player who has {n_value}+ {stat.lower()} in {comp}"
+        comp = "Champions League" if scope == "CL" else random.choice(["Premier League", "La Liga", "Serie A"])
+        return f"Name a player who has {n_value}+ {stat.lower()} in {'his career' if scope == 'Global' else comp}"
     elif template_type == 11:
         nation = random.choice(["English", "Spanish", "French", "Brazilian", "Argentinian", "German"])
         comp = random.choice(["Premier League", "La Liga", "Bundesliga"])
@@ -220,14 +198,9 @@ def start_game():
     attempts = 0
     while len(unique_tasks) < (total_sq - 2) and attempts < 2000:
         new_task = generate_random_task(st.session_state.selected_categories)
-        if new_task != "N/A":
-            unique_tasks.add(new_task)
+        if new_task != "N/A": unique_tasks.add(new_task)
         attempts += 1
-    
-    if len(unique_tasks) < (total_sq - 2):
-        st.error(f"Error: Could only generate {len(unique_tasks)} unique tasks.")
-        return False
-
+    if len(unique_tasks) < (total_sq - 2): return False
     for task_text in list(unique_tasks):
         board.append({"task": task_text, "assets": get_assets(task_text)})
     board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
@@ -259,13 +232,10 @@ elif not st.session_state.game_started:
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
-            default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"],
-            key="cat_filter")
+            default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], key="cat_filter")
         can_start = bool(st.session_state.selected_categories)
-
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
-    
     if st.button("🚀 START MATCH", use_container_width=True, type="primary", disabled=not can_start):
         if start_game(): st.rerun()
 
@@ -282,16 +252,12 @@ else:
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        
-        # Apply "smart text" formatting with grammar fix for the grid box display
         grid_display_text = grid_text_formatter(item["task"]) if i not in [0, len(st.session_state.grid_map)-1] else item["task"]
-        
         grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>{format_header_icons(item["assets"])}<div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{grid_display_text}</div><div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
         st.markdown(f"<h3 style='text-align:center; color:{player['color']}; margin-top: -30px; margin-bottom: 10px;'>{player['name']}</h3>", unsafe_allow_html=True)
-        
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
@@ -299,21 +265,21 @@ else:
                 if player['pos'] == len(st.session_state.grid_map)-1:
                     t = generate_random_task(st.session_state.selected_categories)
                     st.session_state.active_final_task = {"text": t, "assets": get_assets(t)}
-                st.session_state.rolled = True
-                st.rerun()
+                st.session_state.rolled = True; st.rerun()
         else:
-            st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            is_last_square = player['pos'] == len(st.session_state.grid_map) - 1
-            
-            if is_last_square and st.session_state.active_final_task:
-                current_assets = st.session_state.active_final_task['assets']
+            is_last = player['pos'] == len(st.session_state.grid_map) - 1
+            if is_last:
+                st.markdown(f"<div style='text-align:center; font-size:1.5rem; font-weight:800; color:#FFD700; margin-bottom:10px;'>⭐⭐ BONUS QUESTION ⭐⭐</div>", unsafe_allow_html=True)
                 task_text = st.session_state.active_final_task['text']
+                current_assets = st.session_state.active_final_task['assets']
+                # Determine hardcoded count for bonus
+                bonus_count = 5 if any(x in task_text.lower() for x in ["player who played", "stadium", "team whose", "team that has won"]) else 3
+                display_text = smart_pluralize(task_text, bonus_count)
             else:
+                st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
                 current_assets = st.session_state.grid_map[player['pos']]['assets']
                 task_text = st.session_state.grid_map[player['pos']]['task']
-            
-            # Use smart pluralization with grammar fix for the sidebar prompt
-            display_text = smart_pluralize(task_text, st.session_state.current_roll)
+                display_text = smart_pluralize(task_text, st.session_state.current_roll)
 
             with st.container(border=True):
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
@@ -321,7 +287,7 @@ else:
             
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
-                if is_last_square: st.session_state.winner = player
+                if is_last: st.session_state.winner = player
                 else: 
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
@@ -334,12 +300,9 @@ else:
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
-            if st.button("🚩 End Game", use_container_width=True):
-                st.session_state.confirm_reset = True; st.rerun()
+            if st.button("🚩 End Game", use_container_width=True): st.session_state.confirm_reset = True; st.rerun()
         else:
             st.warning("Confirm Reset?")
             rc1, rc2 = st.columns(2)
-            if rc1.button("Confirm", type="primary", use_container_width=True):
-                reset_all_data()
-            if rc2.button("Cancel", use_container_width=True):
-                st.session_state.confirm_reset = False; st.rerun()
+            if rc1.button("Confirm", type="primary", use_container_width=True): reset_all_data()
+            if rc2.button("Cancel", use_container_width=True): st.session_state.confirm_reset = False; st.rerun()
