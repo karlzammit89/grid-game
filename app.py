@@ -32,7 +32,6 @@ KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
-# Smart Statistical Thresholds (N+) - Adjusted for Medium Difficulty
 STAT_THRESHOLDS = {
     "Goals": {"Global": [100, 200], "CL": [20, 30], "League": [50, 75]},
     "Assists": {"Global": [50, 100], "League": [25, 50]},
@@ -66,10 +65,7 @@ def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     clean_text = clean_text_via_regex(text).lower()
     
-    if "won" in clean_text:
-        assets["emojis"].append("🏆")
-    
-    # Statistical Emojis Mapping
+    if "won" in clean_text: assets["emojis"].append("🏆")
     if "goals" in clean_text: assets["emojis"].append("🥅")
     if "assists" in clean_text: assets["emojis"].append("👟")
     if "clean sheets" in clean_text: assets["emojis"].append("🧤")
@@ -85,8 +81,7 @@ def get_assets(text):
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
     
-    if "stadium" in clean_text: 
-        assets["emojis"].append("🏟️")
+    if "stadium" in clean_text: assets["emojis"].append("🏟️")
         
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
@@ -125,31 +120,34 @@ def generate_random_task():
     clubs_list = list(ESPN_LOGOS.keys())
     leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
-    template_type = random.randint(1, 11)
+    # Filter based on user settings
+    enabled = st.session_state.selected_categories
+    pool = []
+    if "Club Connections" in enabled: pool.extend([1, 2, 3])
+    if "Stadiums" in enabled: pool.append(4)
+    if "Kits" in enabled: pool.append(5)
+    if "Trophies" in enabled: pool.extend([6, 7, 8, 9])
+    if "N+ Stats" in enabled: pool.extend([10, 11])
+    
+    if not pool: pool = [1, 2, 6, 9] # Fallback
+    
+    template_type = random.choice(pool)
     
     if template_type == 10:
         stat = random.choice(list(STAT_THRESHOLDS.keys()))
         scope = random.choice(["Global", "League", "CL"]) if stat != "Bookings" else "Global"
         if scope not in STAT_THRESHOLDS[stat]: scope = "Global"
         n_value = random.choice(STAT_THRESHOLDS[stat][scope])
-        
         if scope == "Global":
             return f"Name a player who has {n_value}+ {stat.lower()} in his career"
         else:
             comp = "Champions League" if scope == "CL" else random.choice(["Premier League", "La Liga", "Serie A"])
-            target = f"the {comp}" if comp == "Premier League" or comp == "Champions League" else comp
-            return f"Name a player who has {n_value}+ {stat.lower()} in {target}"
-
+            return f"Name a player who has {n_value}+ {stat.lower()} in {articulate_task('player', comp).split('won ')[-1]}"
     elif template_type == 11:
-        # Adjusted Nationality combinations for Medium difficulty
         nation = random.choice(["English", "Spanish", "French", "Brazilian", "Argentinian", "German"])
-        stat = "Goals"
-        n_value = 50 # Lowered from 100 to ensure more possible answers
         comp = random.choice(["Premier League", "La Liga", "Bundesliga"])
-        article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
         target = f"the {comp}" if comp == "Premier League" else comp
-        return f"Name {article} {nation} player who has {n_value}+ {stat.lower()} in {target}"
-
+        return f"Name {'an' if nation[0].lower() in 'aeiou' else 'a'} {nation} player who has 50+ goals in {target}"
     elif template_type == 1: 
         pair = random.sample(clubs_list, 2)
         return f"Name a player who played for both {pair[0]} & {pair[1]}"
@@ -160,29 +158,27 @@ def generate_random_task():
         target_club = random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan'])
         return f"Name a manager who managed {target_club}"
     elif template_type == 4:
-        s_choice = random.choice(list(STADIUM_COUNTRIES.keys()))
-        return f"Name a stadium located in {s_choice}"
+        return f"Name a stadium located in {random.choice(list(STADIUM_COUNTRIES.keys()))}"
     elif template_type == 5:
         return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
     elif template_type == 6:
         comp = random.choice(leagues_comps + ["Euros", "Copa America"])
-        target = f"the {comp}" if comp in ["Euros", "Copa America", "World Cup"] or "League" in comp or "Cup" in comp else comp
+        # FIX: Added "the" logic for Serie A/La Liga within winners
+        needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", "Europa League", "World Cup", "Euros", "Copa America", "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
+        target = f"the {comp}" if comp in needs_the else comp
         return f"Name a team that has won {target}"
     elif template_type == 7:
-        comp = random.choice(leagues_comps + ["Euros", "Copa America"])
-        return articulate_task("player", comp, action="has won")
+        return articulate_task("player", random.choice(leagues_comps + ["Euros", "Copa America"]), action="has won")
     elif template_type == 8:
         comp = random.choice(["Euros", "Copa America", "World Cup", "Champions League", "Europa League"])
         valid_nation = random.choice(TROPHY_WINNERS.get(comp, EUROPEANS + SOUTH_AMERICANS))
         return articulate_task(valid_nation, comp, action="has won")
     else:
         comp = random.choice(leagues_comps + ["Euros", "Copa America"])
-        if comp == "Euros": nation = random.choice(EUROPEANS)
-        elif comp == "Copa America": nation = random.choice(SOUTH_AMERICANS)
-        else: nation = random.choice(all_nations)
+        nation = random.choice(EUROPEANS if comp == "Euros" else SOUTH_AMERICANS if comp == "Copa America" else all_nations)
         return articulate_task(nation, comp, action="has played in")
 
-# --- 4. STATE MANAGEMENT & GAME ENGINE ---
+# --- 4. STATE MANAGEMENT ---
 def reset_all_data():
     for key in list(st.session_state.keys()): del st.session_state[key]
     st.rerun()
@@ -191,7 +187,8 @@ if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
         'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None
+        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None,
+        'selected_categories': ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"]
     })
 
 def start_game():
@@ -229,6 +226,9 @@ elif not st.session_state.game_started:
         c1, c2 = st.columns(2)
         st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
+        st.session_state.selected_categories = st.multiselect("Active Categories", 
+            ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
+            default=st.session_state.selected_categories)
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"): start_game(); st.rerun()
@@ -255,7 +255,6 @@ else:
 
     with st.sidebar:
         st.markdown(f"<h3 style='text-align:center; color:{player['color']}; margin-top: -30px; margin-bottom: 10px;'>{player['name']}</h3>", unsafe_allow_html=True)
-        
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
@@ -283,7 +282,6 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
-
         st.markdown("---")
         if not st.session_state.confirm_reset:
             if st.button("🚩 End Game", use_container_width=True):
