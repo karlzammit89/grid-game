@@ -63,15 +63,16 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 def get_answer_logic(task_text):
     t_lower = task_text.lower()
     
-    # --- 1. CLUB CONNECTIONS (Scraper - Already fetches all players) ---
+    # --- 1. CLUB CONNECTIONS (Scraper) ---
     if "both" in t_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
             shared = fetch_shared_players(c1, c2) 
-            return f"**Players for both clubs:**\n" + ", ".join(shared) if shared else "No connection data found."
+            # Join with newline and bullet points
+            return "**Players for both clubs:**\n\n" + "\n".join([f"* {p}" for p in shared]) if shared else "No connection data found."
 
-    # --- 2. TROPHIES (Comprehensive Winners) ---
+    # --- 2. TROPHIES ---
     TROPHY_DATA = {
         "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", "Man United", "Chelsea", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Celtic", "Hamburg", "Steaua București", "Marseille", "Dortmund", "Feyenoord", "Aston Villa", "PSV Eindhoven", "Red Star Belgrade", "Man City"],
         "premier league": ["Man United", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester City", "Blackburn Rovers"],
@@ -86,9 +87,9 @@ def get_answer_logic(task_text):
     if "won" in t_lower or "winner" in t_lower:
         for trophy, winners in TROPHY_DATA.items():
             if trophy in t_lower:
-                return f"**All Previous Winners:**\n" + ", ".join(winners)
+                return f"**All Previous Winners:**\n\n" + "\n".join([f"* {w}" for w in winners])
 
-    # --- 3. STADIUMS (By Country) ---
+    # --- 3. STADIUMS ---
     STADIUM_DATA = {
         "england": ["Wembley", "Old Trafford", "Anfield", "Emirates", "St James' Park", "Etihad", "Tottenham Hotspur Stadium", "Villa Park", "Stamford Bridge", "Goodison Park", "Elland Road", "Hillsborough"],
         "spain": ["Santiago Bernabéu", "Camp Nou", "Metropolitano", "Mestalla", "San Mamés", "Ramón Sánchez Pizjuán", "Benito Villamarín", "Reale Arena"],
@@ -100,9 +101,9 @@ def get_answer_logic(task_text):
     if "stadium" in t_lower:
         for country, stadiums in STADIUM_DATA.items():
             if country in t_lower:
-                return f"**Stadiums in {country.title()}:**\n" + ", ".join(stadiums)
+                return f"**Stadiums in {country.title()}:**\n\n" + "\n".join([f"* {s}" for s in stadiums])
 
-    # --- 4. KITS (Major Club Examples) ---
+    # --- 4. KITS ---
     KIT_DATA = {
         "red": ["Liverpool", "Man United", "Arsenal", "Bayern Munich", "Benfica", "Ajax", "AC Milan", "Sevilla", "Nottingham Forest", "RB Leipzig"],
         "blue": ["Chelsea", "Man City", "Everton", "Leicester", "Napoli", "Inter Milan", "PSG", "Porto", "Schalke", "Lazio", "Rangers"],
@@ -115,9 +116,9 @@ def get_answer_logic(task_text):
     if "kit color" in t_lower:
         for color, teams in KIT_DATA.items():
             if color in t_lower:
-                return f"**Teams with {color.title()} kits:**\n" + ", ".join(teams)
+                return f"**Teams with {color.title()} kits:**\n\n" + "\n".join([f"* {t}" for t in teams])
 
-    return "Answer set not found. Check category data."
+    return "No instant data found."
 
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
