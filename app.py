@@ -274,7 +274,7 @@ else:
         else:
             is_last = player['pos'] == len(st.session_state.grid_map) - 1
             if is_last:
-                st.markdown(f"<div style='text-align:center; font-size:1.5rem; font-weight:700; color:#FFD700; margin-bottom:10px;'>⭐ BONUS QUESTION ⭐</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.3rem; font-weight:800; color:#FFD700; margin-bottom:10px;'>⭐ BONUS QUESTION ⭐</div>", unsafe_allow_html=True)
                 task_text = st.session_state.active_final_task['text']
                 current_assets = st.session_state.active_final_task['assets']
                 bonus_count = 5 if any(x in task_text.lower() for x in ["player who played", "stadium", "team whose", "team that has won"]) else 3
