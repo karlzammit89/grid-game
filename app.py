@@ -1,6 +1,5 @@
 import streamlit as st
 import random
-import time
 import re
 
 # --- 1. FLAG IMAGE MAPPING ---
@@ -27,7 +26,23 @@ def clean_text_and_add_flag(text):
             break
     return f"{clean_text}{flag_html}"
 
-# --- 2. EXPANDED CRITERIA POOL (High Versatility) ---
+# --- 2. INFINITE QUESTION GENERATOR ---
+def generate_final_challenge():
+    """Generates a unique high-difficulty question using templates."""
+    counts = ["3", "4", "5"]
+    subjects = ["players", "clubs", "managers", "stadiums", "nations"]
+    
+    templates = [
+        f"Name {random.choice(counts)} {random.choice(subjects)} that have won both the {random.choice(['Champions League', 'World Cup', 'Domestic League'])} and {random.choice(['another major trophy', 'a continental cup', 'a secondary cup'])}.",
+        f"Name {random.choice(counts)} {random.choice(['Brazilian', 'French', 'Spanish', 'German', 'Argentinian'])} {random.choice(['players', 'managers'])} who have won the {random.choice(['Champions League', 'Premier League', 'La Liga', 'Serie A'])}.",
+        f"Name {random.choice(counts)} {random.choice(['London', 'Madrid', 'Milan', 'Manchester', 'Lisbon'])} based clubs that have played in {random.choice(['European competitions', 'top flight finals', 'relegation playoffs'])}.",
+        f"Name {random.choice(counts)} players who have played for {random.choice(['Real Madrid', 'Barcelona', 'Bayern', 'Man Utd'])} and {random.choice(['AC Milan', 'Juventus', 'PSG', 'Chelsea'])}.",
+        f"Name {random.choice(counts)} {random.choice(subjects)} that have achieved {random.choice(['a league & cup double', 'a treble', 'back-to-back titles', 'unbeaten runs'])}.",
+        f"Name {random.choice(counts)} players who have scored {random.choice(['in a World Cup final', 'a UCL hat-trick', '100+ league goals', 'for 3 different top clubs'])}.",
+        f"Name {random.choice(counts)} {random.choice(['African', 'South American', 'European'])} nations that have {random.choice(['reached a WC Semi-final', 'won their continental cup', 'beaten a top 10 ranked team'])}."
+    ]
+    return random.choice(templates)
+
 CRITERIA_POOL = [
     "Name a player who has played for both Real Madrid & AC Milan",
     "Name any Stadium in England with 30,000+ capacity",
@@ -54,19 +69,6 @@ CRITERIA_POOL = [
     "Name a player who has been managed by Jose Mourinho",
     "Name any club that has won the Europa League / UEFA Cup",
     "Name a Belgian player who has played in the Premier League"
-]
-
-FINAL_CHALLENGES = [
-    "Name 3 players who have won the Ballon d'Or but never the Champions League",
-    "Name 4 different clubs that have won the English Top Flight (Pre or Post 1992)",
-    "Name 3 players who have scored in a Champions League Final",
-    "Name 3 cities that have two or more teams in their country's top division",
-    "Name 4 managers who have won the World Cup",
-    "Name 3 players who have played for both Inter Milan and AC Milan",
-    "Name 3 nations that have won the World Cup more than once",
-    "Name 4 players who have played in 4 or more different World Cups",
-    "Name 3 clubs that have won the 'Treble' (League, Cup, UCL/European Cup)",
-    "Name 4 players who have scored over 50 goals for their National Team"
 ]
 
 # --- 3. STATE MANAGEMENT ---
@@ -153,8 +155,11 @@ else:
                 st.session_state.current_roll = random.randint(1, 3)
                 new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 player['prev'], player['pos'] = player['pos'], new_pos
+                
+                # Dynamic Question Generation if they land on final whistle
                 if player['pos'] == last_sq_index:
-                    st.session_state.active_final_task = random.choice(FINAL_CHALLENGES)
+                    st.session_state.active_final_task = generate_final_challenge()
+                
                 st.session_state.rolled = True
                 st.rerun()
         else:
@@ -162,7 +167,7 @@ else:
             
             if player['pos'] == last_sq_index:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<p style='text-align:center;'>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:10px; border-radius:10px;'>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
