@@ -35,6 +35,12 @@ KIT_COLOR_MAP = {
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
+    
+    # 1. Stadium Check
+    if "stadium" in text.lower():
+        assets["emojis"].append("🏟️")
+        
+    # 2. Logos
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -43,6 +49,8 @@ def get_assets(text):
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
+                
+    # 3. Flags
     search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
                    "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
                    "Argentina": "ar", "Mexico": "mx"}
@@ -50,20 +58,30 @@ def get_assets(text):
         if word.lower() in text.lower():
             assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
             break
+            
+    # 4. Color Emojis
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in text.lower():
             assets["emojis"].append(emoji)
             break
+            
     return assets
 
 def format_header_icons(assets):
     html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 30px;">'
-    for f in assets["flags"]:
-        html += f'<img src="{f}" style="height:18px; border-radius:2px; border:1px solid #444;">'
-    for l in assets["logos"]:
-        html += f'<img src="{l}" style="height:24px;">'
+    
+    # Render emojis first (covers Stadium 🏟️ and Kit Colors 🔴)
     for e in assets["emojis"]:
         html += f'<span style="font-size:22px;">{e}</span>'
+        
+    # Render Flags
+    for f in assets["flags"]:
+        html += f'<img src="{f}" style="height:18px; border-radius:2px; border:1px solid #444;">'
+        
+    # Render Logos
+    for l in assets["logos"]:
+        html += f'<img src="{l}" style="height:24px;">'
+        
     if not any(assets.values()):
         return html + '<span style="font-size:22px;">⚽</span></div>'
     return html + '</div>'
@@ -177,7 +195,6 @@ else:
             st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800; margin-bottom:10px;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
             st.markdown(f"<p style='text-align:center; color:#aaa;'>Provide <b>{st.session_state.current_roll}</b> answers for:</p>", unsafe_allow_html=True)
             
-            # THE FIX: Added padding and bottom margin to the question text
             task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
             st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 10px; margin-bottom: 25px; border-radius:8px; background:#262730;'>{task_text}</div>", unsafe_allow_html=True)
 
