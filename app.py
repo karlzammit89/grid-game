@@ -22,16 +22,17 @@ CLUB_DOMAINS = {
 }
 
 def get_club_logo(text):
-    """Fetches logos using the Hunter.io API (reliable 2026 alternative)."""
+    """Detects club names and returns HTML for logos using Hunter.io."""
     logo_html = ""
     for club, domain in CLUB_DOMAINS.items():
         if club.lower() in text.lower():
-            # Using Hunter.io API: zero signup, high-res logos
+            # Hunter.io is a reliable 2026 alternative to Clearbit
             url = f"https://hunter.io/api/logo/{domain}"
-            logo_html += f'<img src="{url}" style="height:20px; vertical-align:middle; margin-right:6px; border-radius:3px;">'
+            logo_html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-right:6px; border-radius:3px; border:1px solid #444;">'
     return logo_html
 
 def clean_text_and_add_assets(text):
+    """Adds flags and working club logos to the text."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
     # Flags logic
@@ -42,7 +43,7 @@ def clean_text_and_add_assets(text):
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    # Club Logo logic (Updated Service)
+    # Club Logo logic
     logo_html = get_club_logo(clean_text)
     
     return f"{logo_html}{clean_text}{flag_html}"
@@ -116,16 +117,16 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f'<div style="text-align:center; padding:100px;"><h1>🏆 FULL TIME!</h1><h2 style="color:{st.session_state.winner["color"]};">Congratulations {st.session_state.winner["name"]}!</h2></div>', unsafe_allow_html=True)
-    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
+    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
+    if st.button("🏟️ Return to Menu & Refresh Data", use_container_width=True, type="primary"):
         reset_all_data()
 
 elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
         c1, c2 = st.columns(2)
-        st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
-        st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
+        st.session_state.grid_size = c1.number_input("Grid Size (e.g. 4 for 16 squares)", 3, 6, 4)
+        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
@@ -134,12 +135,13 @@ elif not st.session_state.game_started:
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
-    st.markdown("""
+    st.markdown(f"""
         <style>
-        .grid-container { display: grid; gap: 10px; }
-        .grid-item { background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-        .active-sq { border: 3px solid #FFF; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
-        .p-tag { border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }
+        .grid-container {{ display: grid; gap: 10px; }}
+        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
+        .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
+        .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
+        .icon-emoji {{ font-size: 1.8rem; margin-bottom: 5px; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -147,7 +149,8 @@ else:
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        grid_html += f'<div class="grid-item {active}"><div style="color:#eee; font-size:0.85rem;">{item["task"]}</div><div style="min-height:30px;">{marks}</div></div>'
+        icon = "⚽" if i != 0 and i != len(st.session_state.grid_map)-1 else "🏁" if i == 0 else "🏆"
+        grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div><div class="icon-emoji">{icon}</div><div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div><div style="min-height:30px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
@@ -155,7 +158,7 @@ else:
         last_sq_index = len(st.session_state.grid_map) - 1
 
         if not st.session_state.rolled:
-            if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
+            if st.button("🎲 ROLL DICE (Max 3)", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
                 player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 if player['pos'] == last_sq_index:
@@ -163,29 +166,47 @@ else:
                 st.session_state.rolled = True
                 st.rerun()
         else:
-            st.markdown(f"<h1 style='text-align:center;'>{st.session_state.current_roll}</h1>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
             if player['pos'] == last_sq_index:
-                st.warning("🥅 FINAL CHALLENGE!")
-                st.markdown(st.session_state.active_final_task, unsafe_allow_html=True)
-                if st.button("🎯 Scored!", use_container_width=True):
+                st.warning("🥅 GOAL LINE CHALLENGE!")
+                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                if c1.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
                     st.rerun()
-                if st.button("🚫 Missed", use_container_width=True):
+                if c2.button("🚫 Missed", use_container_width=True):
+                    player['pos'] = player['prev']
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+            elif player['pos'] != 0:
+                st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                if c1.button("✅ Success", use_container_width=True):
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+                if c2.button("❌ Fail", use_container_width=True):
                     player['pos'] = player['prev']
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
             else:
-                if st.button("✅ Success", use_container_width=True):
-                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                    st.session_state.rolled = False
-                    st.rerun()
-                if st.button("❌ Fail", use_container_width=True):
-                    player['pos'] = player['prev']
+                if st.button("Next Turn", use_container_width=True):
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
 
         st.markdown("---")
-        if st.button("🚩 End Match & Reset", use_container_width=True):
-            reset_all_data()
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Match", use_container_width=True):
+                st.session_state.confirm_reset = True
+                st.rerun()
+        else:
+            st.error("Quit and Clear Data?")
+            cy, cn = st.columns(2)
+            if cy.button("Yes", use_container_width=True, type="primary"):
+                reset_all_data()
+            if cn.button("No", use_container_width=True):
+                st.session_state.confirm_reset = False
+                st.rerun()
