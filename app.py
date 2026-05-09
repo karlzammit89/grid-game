@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 
-# --- 1. SMART DATA MAPPING ---
+# --- 1. DATA MAPPING ---
 COUNTRY_DATA = {
     "French": "fr", "Spanish": "es", "English": "gb-eng", "Portuguese": "pt",
     "Dutch": "nl", "Belgian": "be", "German": "de", "Italian": "it",
@@ -34,7 +34,6 @@ KIT_COLOR_MAP = {
 
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
-    """Returns a dictionary of icons/logos found in the text."""
     assets = {"logos": [], "flags": [], "emojis": []}
     
     # 1. Logos
@@ -54,7 +53,7 @@ def get_assets(text):
     for word, iso in search_pool.items():
         if word.lower() in text.lower():
             assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
-            break # Usually one flag per question
+            break
 
     # 3. Color Emojis
     for color, emoji in KIT_COLOR_MAP.items():
@@ -65,28 +64,18 @@ def get_assets(text):
     return assets
 
 def format_header_icons(assets):
-    """Combines all assets into one row of HTML."""
     html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 30px;">'
-    
-    # Add Flags
     for f in assets["flags"]:
         html += f'<img src="{f}" style="height:18px; border-radius:2px; border:1px solid #444;">'
-    
-    # Add Logos
     for l in assets["logos"]:
         html += f'<img src="{l}" style="height:24px;">'
-    
-    # Add Emojis
     for e in assets["emojis"]:
         html += f'<span style="font-size:22px;">{e}</span>'
-        
-    # If nothing was added, return a football as default
-    if not assets["flags"] and not assets["logos"] and not assets["emojis"]:
+    if not any(assets.values()):
         return html + '<span style="font-size:22px;">⚽</span></div>'
-        
     return html + '</div>'
 
-# --- 3. DYNAMIC LOGIC GENERATORS ---
+# --- 3. DYNAMIC LOGIC ---
 def generate_random_task():
     nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
@@ -149,20 +138,20 @@ def start_game():
     }
     st.session_state.game_started = True
 
-# --- 5. DASHBOARD UI ---
+# --- 5. FULL UI RENDER ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
-    if st.button("🏟️ Return to Menu", use_container_width=True): reset_all_data()
+    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
+    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"): reset_all_data()
 
 elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
         c1, c2 = st.columns(2)
-        st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
-        st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
+        st.session_state.grid_size = c1.number_input("Grid Size (4 = 4x4, 5 = 5x5)", 3, 6, 4)
+        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
@@ -174,9 +163,9 @@ else:
     st.markdown(f"""
         <style>
         .grid-container {{ display: grid; gap: 12px; grid-template-columns: repeat({st.session_state.grid_size}, 1fr); }}
-        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
+        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; }}
         .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
-        .p-tag {{ border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
+        .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -184,37 +173,35 @@ else:
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        
-        # New Header Logic
         header_icons = format_header_icons(item["assets"])
         
         grid_html += f'''
             <div class="grid-item {active}">
                 <div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>
                 {header_icons}
-                <div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div>
-                <div style="min-height:30px; display:flex; justify-content:center; align-items:center;">{marks}</div>
+                <div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2; padding:0 5px;">{item["task"]}</div>
+                <div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div>
             </div>'''
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
         st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
-        last_sq = len(st.session_state.grid_map) - 1
+        last_sq_idx = len(st.session_state.grid_map) - 1
 
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
-                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq)
-                if player['pos'] == last_sq:
+                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq_idx)
+                if player['pos'] == last_sq_idx:
                     task = generate_random_task()
                     st.session_state.active_final_task = {"text": task, "assets": get_assets(task)}
                 st.session_state.rolled = True
                 st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            if player['pos'] == last_sq:
+            if player['pos'] == last_sq_idx:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<div style='text-align:center; border:1px solid #555; padding:15px; border-radius:10px;'>{st.session_state.active_final_task['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task['text']}</div>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("🎯 Scored!", use_container_width=True): st.session_state.winner = player; st.rerun()
                 if c2.button("🚫 Missed", use_container_width=True):
@@ -223,7 +210,7 @@ else:
                     st.session_state.rolled = False
                     st.rerun()
             elif player['pos'] != 0:
-                st.markdown(f"<div style='text-align:center;'>Provide <b>{st.session_state.current_roll}</b> answers</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center;'>Provide <b>{st.session_state.current_roll}</b> answers for:<br><br><i>{st.session_state.grid_map[player['pos']]['task']}</i></div>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("✅ Success", use_container_width=True):
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
@@ -239,3 +226,12 @@ else:
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
+
+        st.markdown("---")
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Match", use_container_width=True): st.session_state.confirm_reset = True; st.rerun()
+        else:
+            st.error("Quit?")
+            cy, cn = st.columns(2)
+            if cy.button("Yes", use_container_width=True): reset_all_data()
+            if cn.button("No", use_container_width=True): st.session_state.confirm_reset = False; st.rerun()
