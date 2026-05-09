@@ -3,8 +3,7 @@ import random
 import re
 import pandas as pd
 
-# --- 1. THE BRAIN: LOCAL DATASET ---
-# This ensures instant answers for common categories
+# --- 1. DATA & ANSWER DATABASE ---
 ANSWER_BANK = {
     "stadium": {
         "England": ["Old Trafford", "Anfield", "Wembley", "Emirates", "St James' Park", "Etihad", "Villa Park"],
@@ -34,12 +33,18 @@ ANSWER_BANK = {
     }
 }
 
-# --- 2. THE UTILITIES ---
+CLUB_IDS = {
+    "Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", 
+    "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Tottenham": "3ad23a75",
+    "Aston Villa": "860223d1", "Newcastle": "b1b71fcb", "Real Madrid": "5324c30a", 
+    "Barcelona": "206d9d25", "Atletico Madrid": "db3b5483", "Sevilla": "ad2be748",
+    "AC Milan": "e2d42690", "Juventus": "e2d42690", "Inter Milan": "d60ad303",
+    "Bayern Munich": "054fdde2", "PSG": "e2d8892c"
+}
+
+# --- 2. ENGINES ---
 @st.cache_data(show_spinner=False)
 def fetch_shared_players(club1, club2):
-    """Scrapes FBref for players who played for both clubs."""
-    # Mapping simple names to FBref IDs
-    CLUB_IDS = {"Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Real Madrid": "5324c30a", "Barcelona": "206d9d25", "Bayern Munich": "054fdde2", "PSG": "e2d8892c", "Juventus": "e2d42690", "Inter Milan": "d60ad303", "AC Milan": "e2d42690"}
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
     if not id1 or not id2: return []
     try:
@@ -50,53 +55,96 @@ def fetch_shared_players(club1, club2):
     return []
 
 def get_answer_logic(task_text):
-    """Route the task to the correct answer source."""
     task_lower = task_text.lower()
-    
-    # 1. Shared Players (Club Connections)
     if "both" in task_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
             shared = fetch_shared_players(c1, c2)
-            return f"Players: {', '.join(shared[:10])}" if shared else "Check the Google link below for shared players."
-
-    # 2. Stadiums
+            if shared: return f"Examples: {', '.join(shared[:12])}"
+    
     if "stadium" in task_lower:
         for country, stadiums in ANSWER_BANK["stadium"].items():
-            if country.lower() in task_lower:
-                return f"Stadiums in {country}: {', '.join(stadiums)}"
-
-    # 3. Kits
+            if country.lower() in task_lower: return f"Stadiums: {', '.join(stadiums)}"
+            
     if "kit color" in task_lower:
         for color, teams in ANSWER_BANK["kit"].items():
-            if color.lower() in task_lower:
-                return f"{color} kit teams: {', '.join(teams)}"
-
-    # 4. Trophy Winners
+            if color.lower() in task_lower: return f"Teams with {color} kits: {', '.join(teams)}"
+            
     if "won" in task_lower:
         for trophy, winners in ANSWER_BANK["trophy_teams"].items():
-            if trophy.lower() in task_lower:
-                return f"Previous winners: {', '.join(winners)}"
+            if trophy.lower() in task_lower: return f"Previous winners: {', '.join(winners)}"
+            
+    return "No instant data. Check the link below!"
 
-    return "No instant data found. Use the verification link below!"
+# --- REST OF YOUR ORIGINAL FUNCTIONS (grid_text_formatter, etc.) ---
+def grid_text_formatter(text):
+    text = text.replace("Name a football team whose", "Football teams whose")
+    text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
+    text = re.sub(r"Name a player", "Players", text)
+    text = re.sub(r"Name a team", "Teams", text)
+    text = re.sub(r"Name a stadium", "Stadiums", text)
+    return text
 
-# --- 3. UI INTEGRATION (In your Sidebar or Main Loop) ---
-# Assuming 'task_text' is the current square's task:
-with st.expander("👁️ View Answers"):
-    # Get structured answers
-    result = get_answer_logic(task_text)
-    if "Check" in result or "No instant" in result:
-        st.info(result)
-    else:
-        st.success(result)
+def smart_pluralize(text, count):
+    if count <= 1: return text
+    text = text.replace("Name a football team whose", f"Name {count} football teams whose")
+    text = re.sub(r"Name a[n]? (\w+) player", f"Name {count} \\1 players", text)
+    return text
+
+def get_assets(text):
+    assets = {"logos": [], "flags": [], "emojis": ["⚽"]}
+    return assets
+
+def format_header_icons(assets):
+    return "⚽"
+
+# --- 3. STATE MANAGEMENT ---
+if 'game_started' not in st.session_state:
+    st.session_state.update({
+        'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
+        'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 'grid_map': []
+    })
+
+# --- 4. MAIN UI ---
+if not st.session_state.game_started:
+    st.title("Football Path Trivia")
+    if st.button("Start Game"):
+        # Setup logic...
+        st.session_state.grid_map = [{"task": "KICK OFF", "assets":{}}] + [{"task": "Name a stadium in England", "assets":{}}] * 14 + [{"task": "FINAL WHISTLE", "assets":{}}]
+        st.session_state.player_data = {0: {"name": "Manager 1", "pos": 0, "prev": 0, "color": "#FF4B4B", "initials": "M1"}}
+        st.session_state.game_started = True
+        st.rerun()
+else:
+    player = st.session_state.player_data[st.session_state.turn]
     
-    # Verification Link
-    search_q = task_text.replace("Name a", "").strip()
-    st.markdown(f"""
-    <a href="https://www.google.com/search?q=football+{search_q.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-        <div style="background:#333; color:white; padding:8px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555; margin-top:10px;">
-            🔍 Open Google Verification
-        </div>
-    </a>
-    """, unsafe_allow_html=True)
+    with st.sidebar:
+        st.header(f"Turn: {player['name']}")
+        if not st.session_state.rolled:
+            if st.button("🎲 ROLL"):
+                st.session_state.current_roll = random.randint(1, 3)
+                player['prev'] = player['pos']
+                player['pos'] = min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                st.session_state.rolled = True
+                st.rerun()
+        else:
+            # THIS IS WHERE task_text IS DEFINED
+            task_text = st.session_state.grid_map[player['pos']]['task']
+            st.info(task_text)
+            
+            c1, c2 = st.columns(2)
+            if c1.button("✅ Success"):
+                st.session_state.rolled = False
+                st.rerun()
+            if c2.button("❌ Fail"):
+                player['pos'] = player['prev']
+                st.session_state.rolled = False
+                st.rerun()
+
+            # --- FIXED: VIEW ANSWERS DROPDOWN ---
+            with st.expander("👁️ View Answers"):
+                result = get_answer_logic(task_text)
+                st.write(result)
+                
+                search_q = task_text.replace("Name a", "").strip()
+                st.markdown(f"[🔍 Verify on Google](https://www.google.com/search?q=football+{search_q.replace(' ', '+')})")
