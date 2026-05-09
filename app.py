@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 
-# --- 1. DATA MAPPING (Flags & Reliable Domains) ---
+# --- 1. DATA MAPPING (Flags & Hunter.io Domains) ---
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
@@ -11,7 +11,7 @@ COUNTRY_DATA = {
     "Argentinian": "ar", "Argentina": "ar"
 }
 
-# Switched to domain-based mapping for a more stable logo source in 2026
+# Mapping names to official domains for Hunter.io API
 CLUB_DOMAINS = {
     "Real Madrid": "realmadrid.com", "Barcelona": "fcbarcelona.com",
     "Man Utd": "manutd.com", "Manchester United": "manutd.com",
@@ -22,17 +22,17 @@ CLUB_DOMAINS = {
 }
 
 def get_club_logo(text):
-    """Fetches badges via reliable 2026 Logo CDN."""
+    """Fetches badges via Hunter.io (Zero-authentication API)."""
     logo_html = ""
     for club, domain in CLUB_DOMAINS.items():
         if club.lower() in text.lower():
-            # Using a reliable fallback CDN that bypasses common hotlinking blocks
-            url = f"https://img.logo.dev/{domain}?token=pk_test_v1"
+            # Hunter.io endpoint: no API key required
+            url = f"https://hunter.io/api/logo/{domain}"
             logo_html += f'<img src="{url}" style="height:22px; vertical-align:middle; margin-right:6px;">'
     return logo_html
 
 def clean_text_and_add_assets(text):
-    """Reverts to the text style from image_9ee060.png with fixed assets."""
+    """Preserves your UI while adding working flags and Hunter.io logos."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
     # Flags logic
@@ -43,14 +43,14 @@ def clean_text_and_add_assets(text):
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    # Fixed Club Logo logic
+    # Club Logo logic (Hunter.io Fix)
     logo_html = get_club_logo(clean_text)
     
     return f"{logo_html}{clean_text}{flag_html}"
 
 # --- 2. LOGIC GENERATORS ---
 def generate_final_challenge():
-    big_clubs = ["Real Madrid", "Barcelona", "Man Utd", "Liverpool", "Bayern Munich", "AC Milan", "Juventus", "Chelsea", "Inter Milan", "PSG", "Arsenal", "Man City"]
+    big_clubs = list(CLUB_DOMAINS.keys())
     nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
     leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
@@ -112,7 +112,7 @@ def start_game():
     }
     st.session_state.game_started = True
 
-# --- 4. ORIGINAL UI LAYOUT (REVERTED) ---
+# --- 4. ORIGINAL UI LAYOUT ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
