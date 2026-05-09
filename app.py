@@ -394,23 +394,28 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- ANSWERS SECTION ---
-            with st.expander("👁️ View Answers"):
-                # 1. Check Hardcoded Data first (Trophies, Stadiums, Kits)
-                hardcoded_ans = get_answer_logic(task_text)
-                
-                # 2. Check Club Connections (Scraper)
-                if not hardcoded_ans and "both" in task_text.lower():
-                    match = re.search(r"both (.*?) & (.*)", task_text)
-                    if match:
-                        c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
-                        hardcoded_ans = fetch_shared_players(c1_name, c2_name)
+            ## --- UPDATED ANSWERS SECTION ---
+            # 1. Check Hardcoded Data first (Trophies, Stadiums, Kits)
+            hardcoded_ans = get_answer_logic(task_text)
+            
+            # 2. Check Club Connections (Scraper)
+            if not hardcoded_ans and "both" in task_text.lower():
+                match = re.search(r"both (.*?) & (.*)", task_text)
+                if match:
+                    c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
+                    hardcoded_ans = fetch_shared_players(c1_name, c2_name)
 
-                # Display Logic
+            # 3. Dynamic Header with count (n)
+            ans_count = len(hardcoded_ans) if hardcoded_ans else 0
+            with st.expander(f"👁️ View Answers ({ans_count})"):
                 if hardcoded_ans:
-                    st.write(", ".join(hardcoded_ans[:15]))
+                    # Each answer on its own row
+                    for answer in hardcoded_ans[:15]:
+                        st.write(f"• {answer}")
                 else:
-                    st.info("No answers found in quick-lookup.")
+                    st.info("No answers found in database.")
+
+            # SEARCH BUTTON REMOVED
                 
                 # Link for all questions
                 search_query = task_text.replace("Name a", "").strip()
