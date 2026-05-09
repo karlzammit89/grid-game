@@ -104,7 +104,7 @@ def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     return html + '</div>'
 
 # --- 4. DYNAMIC LOGIC ---
-def generate_random_task(categories):
+def generate_random_task():
     clubs_list = list(CLUB_IDS.keys())
     pool = [1, 1, 2, 4, 5, 6] 
     template_type = random.choice(pool)
@@ -130,15 +130,14 @@ if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
         'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None,
-        'selected_categories': ["Club Connections", "Trophies", "Stadiums", "Kits"]
+        'grid_map': [], 'winner': None
     })
 
 def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     for _ in range(total_sq - 2):
-        t = generate_random_task(st.session_state.selected_categories)
+        t = generate_random_task()
         board.append({"task": t, "assets": get_assets(t)})
     board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
     st.session_state.grid_map = board
@@ -212,15 +211,15 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
             
-            # --- ANSWERS DROPDOWN BELOW BUTTONS ---
+            # --- ANSWERS DROPDOWN ---
             if "both" in task.lower():
                 match = re.search(r"both (.*?) & (.*)", task)
                 if match:
                     c1_name, c2_name = match.group(1), match.group(2)
                     ans_list = fetch_shared_players(c1_name, c2_name)
-                    with st.expander(f"👁️ Possible Answers ({len(ans_list)})"):
+                    with st.expander(f"👁️ View Answers ({len(ans_list)})"):
                         if ans_list: st.write(", ".join(ans_list))
-                        else: st.write("Searching database...")
+                        else: st.write("No direct database matches found.")
 
         st.markdown("---")
         if st.button("🚩 End Game", use_container_width=True): reset_all_data()
