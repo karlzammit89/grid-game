@@ -32,9 +32,9 @@ KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
+# Mapping used ONLY for flags now
 COMPETITION_GEOGRAPHY = {
     "Champions League": "eu", "Europa League": "eu", "Euros": "eu",
-    "World Cup": "world", "Copa America": "world",
     "Premier League": "gb-eng", "Championship": "gb-eng", "FA Cup": "gb-eng",
     "La Liga": "es", "Serie A": "it", "Bundesliga": "de", "Ligue 1": "fr"
 }
@@ -53,33 +53,32 @@ def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     clean_text = clean_text_via_regex(text).lower()
     
-    # Strict 🏆 Logic: Only if "won" is in the text
+    # 1. Strict Trophy Logic: Only "won" triggers the trophy.
+    # No competition specific mapping exists for trophies anymore.
     if "won" in clean_text:
         assets["emojis"].append("🏆")
 
-    # Flag Logic: Scan for competitions and nationalities
+    # 2. Flag Logic: Scan for competition locations
     for comp, geo in COMPETITION_GEOGRAPHY.items():
         if comp.lower() in clean_text:
-            # Geography flags added (except for "world" which had the emoji removed)
-            if geo != "world":
-                flag_url = f"https://flagcdn.com/w40/{geo}.png"
-                if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+            flag_url = f"https://flagcdn.com/w40/{geo}.png"
+            if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
-    # Scan for Nationalities to add flags (e.g., Nigerian flag for "Nigerian player")
+    # 3. Nationality Flag Logic: (Ensures multi-flag support)
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
-    # Scan for Stadium Countries
+    # 4. Stadium Flags & Emoji
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-
-    if "stadium" in clean_text: assets["emojis"].append("🏟️")
+    if "stadium" in clean_text: 
+        assets["emojis"].append("🏟️")
         
-    # Logo Logic
+    # 5. Club Logo Logic
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -89,6 +88,7 @@ def get_assets(text):
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
             
+    # 6. Kit Color Emojis
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in clean_text:
             assets["emojis"].append(emoji)
@@ -145,16 +145,12 @@ def generate_random_task():
         comp = random.choice(["Euros", "Copa America", "World Cup", "Champions League", "Europa League"])
         valid_nation = random.choice(TROPHY_WINNERS.get(comp, EUROPEANS + SOUTH_AMERICANS))
         article = "an" if valid_nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-        return f"Name {article} {valid_nation} player who has won the {comp}"
+        return f"Name {article} {valid_nation} player who has won {('the ' + comp) if 'Cup' in comp or 'League' in comp else comp}"
     else:
-        # GEOGRAPHIC SMART MAPPING
         comp = random.choice(global_comps + ["Euros", "Copa America"])
-        if comp == "Euros":
-            nation = random.choice(EUROPEANS)
-        elif comp == "Copa America":
-            nation = random.choice(SOUTH_AMERICANS)
-        else:
-            nation = random.choice(all_nations)
+        if comp == "Euros": nation = random.choice(EUROPEANS)
+        elif comp == "Copa America": nation = random.choice(SOUTH_AMERICANS)
+        else: nation = random.choice(all_nations)
             
         article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
         comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
