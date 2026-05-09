@@ -3,7 +3,38 @@ import random
 import re
 import pandas as pd
 
-# --- 1. DATA MAPPING ---
+# --- 1. DATA & ANSWER DATABASE ---
+# This serves as your "Free & Unlimited" answer bank
+ANSWER_BANK = {
+    "stadium": {
+        "England": ["Old Trafford", "Anfield", "Wembley", "Emirates Stadium", "St James' Park", "Etihad Stadium"],
+        "Spain": ["Santiago Bernabéu", "Camp Nou", "Metropolitano", "Sánchez Pizjuán", "Mestalla"],
+        "Germany": ["Allianz Arena", "Signal Iduna Park", "Olympiastadion", "Veltins-Arena"],
+        "Italy": ["San Siro", "Stadio Olimpico", "Juventus Stadium", "Stadio Diego Armando Maradona"],
+        "France": ["Parc des Princes", "Stade Vélodrome", "Stade de France", "Groupama Stadium"],
+        "Portugal": ["Estádio da Luz", "Estádio do Dragão", "Estádio José Alvalade"],
+        "Brazil": ["Maracanã", "Allianz Parque", "Mineirão", "Neo Química Arena"],
+        "Argentina": ["La Bombonera", "El Monumental", "Cilindro de Avellaneda"],
+        "Mexico": ["Estadio Azteca", "Estadio BBVA", "Estadio Akron"]
+    },
+    "kit": {
+        "Red": ["Man Utd", "Liverpool", "Arsenal", "Bayern Munich", "AC Milan", "Benfica", "Ajax"],
+        "Blue": ["Chelsea", "Man City", "Everton", "Leicester", "Napoli", "Inter Milan", "PSG", "Porto"],
+        "White": ["Real Madrid", "Tottenham", "Leeds", "Valencia", "Lyon", "Marseille"],
+        "Yellow": ["Dortmund", "Villarreal", "Fenerbahce", "Watford", "Cadiz"],
+        "Green": ["Sporting CP", "Celtic", "Real Betis", "Sassuolo", "Palmeiras"],
+        "Black": ["Newcastle (Away)", "Juventus (Away)", "Eintracht Frankfurt"]
+    },
+    "trophy_teams": {
+        "Champions League": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Man City"],
+        "Premier League": ["Man Utd", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester", "Blackburn"],
+        "World Cup": ["Argentina", "France", "Germany", "Brazil", "Italy", "Spain", "England", "Uruguay"],
+        "La Liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla"],
+        "Serie A": ["Juventus", "Inter Milan", "AC Milan", "Napoli", "AS Roma"],
+        "Bundesliga": ["Bayern Munich", "Dortmund", "Leverkusen", "Stuttgart", "Wolfsburg"]
+    }
+}
+
 CLUB_IDS = {
     "Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", 
     "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Tottenham": "3ad23a75",
@@ -37,10 +68,7 @@ ESPN_LOGOS = {
 }
 
 STADIUM_COUNTRIES = {"England": "gb-eng", "Spain": "es", "Germany": "de", "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", "Argentina": "ar", "Mexico": "mx"}
-
-KIT_COLOR_MAP = {
-    "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
-}
+KIT_COLOR_MAP = {"Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"}
 
 STAT_THRESHOLDS = {
     "Goals": {"Global": [100, 200], "CL": [20, 30], "League": [50, 75]},
@@ -72,6 +100,30 @@ def fetch_shared_players(club1, club2):
     except: return []
     return []
 
+def get_manual_answers(task_text):
+    """Checks the local ANSWER_BANK for quick answers"""
+    task_lower = task_text.lower()
+    
+    # Stadium Logic
+    if "stadium" in task_lower:
+        for country in ANSWER_BANK["stadium"]:
+            if country.lower() in task_lower:
+                return ANSWER_BANK["stadium"][country]
+    
+    # Kit Logic
+    if "kit color" in task_lower:
+        for color in ANSWER_BANK["kit"]:
+            if color.lower() in task_lower:
+                return ANSWER_BANK["kit"][color]
+                
+    # Trophy Team Logic
+    if "team that has won" in task_lower:
+        for trophy in ANSWER_BANK["trophy_teams"]:
+            if trophy.lower() in task_lower:
+                return ANSWER_BANK["trophy_teams"][trophy]
+    
+    return None
+
 def grid_text_formatter(text):
     text = text.replace("Name a football team whose", "Football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
@@ -80,9 +132,6 @@ def grid_text_formatter(text):
     text = re.sub(r"Name a stadium", "Stadiums", text)
     text = re.sub(r"Name a manager", "Managers", text)
     text = text.replace("players who has", "players who have")
-    text = text.replace("Players who has", "Players who have")
-    text = text.replace("teams that has", "teams that have")
-    text = text.replace("Teams that has", "Teams that have")
     return text
 
 def smart_pluralize(text, count):
@@ -93,8 +142,6 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
-    text = text.replace("players who has", "players who have")
-    text = text.replace("teams that has", "teams that have")
     return text
 
 def articulate_task(subject_type, target, action="played for"):
@@ -312,36 +359,40 @@ else:
                 st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{display_text}</div>", unsafe_allow_html=True)
             
             c1, c2 = st.columns(2)
-            if c1.button("✅ Success", key="succ_btn", use_container_width=True):
+            if c1.button("✅ Success", use_container_width=True):
                 if is_last: st.session_state.winner = player
                 else: 
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                 st.rerun()
-            if c2.button("❌ Fail", key="fail_btn", use_container_width=True):
+            if c2.button("❌ Fail", use_container_width=True):
                 player['pos'] = player['prev']
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- ANSWERS SECTION ---
+            # --- ANSWERS ENGINE (UPGRADED) ---
             with st.expander("👁️ View Answers"):
+                # 1. Check specialized scraper (Club Connections)
                 if "both" in task_text.lower():
                     match = re.search(r"both (.*?) & (.*)", task_text)
                     if match:
-                        c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
-                        ans_list = fetch_shared_players(c1_name, c2_name)
-                        if ans_list: 
-                            st.write(", ".join(ans_list[:15]))
-                        else: 
-                            st.info("No common players found in quick-lookup.")
+                        c1_n, c2_n = match.group(1).strip(), match.group(2).strip()
+                        ans = fetch_shared_players(c1_n, c2_n)
+                        if ans: st.success(f"Examples: {', '.join(ans[:12])}")
+                        else: st.warning("No quick-lookup matches. Check Search.")
+
+                # 2. Check local manual bank (Stadiums, Kits, Trophy Winners)
+                manual_ans = get_manual_answers(task_text)
+                if manual_ans:
+                    st.success(f"Possible Answers: {', '.join(manual_ans)}")
                 
-                # Link for all questions
-                search_query = task_text.replace("Name a", "").strip()
+                # 3. Always provide search link as backup
+                s_query = task_text.replace("Name a", "").strip()
                 st.markdown(f"""
-                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555;">
-                        🔍 Search for Answers
+                <a href="https://www.google.com/search?q=football+{s_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
+                    <div style="background:#333; color:white; padding:8px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555; margin-top:10px;">
+                        🔍 Verify on Google
                     </div>
                 </a>
                 """, unsafe_allow_html=True)
