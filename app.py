@@ -50,7 +50,7 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
 def grid_text_formatter(text):
-    """Formats text for grid boxes: removes 'Name a' and pluralizes."""
+    """Formats text for grid boxes: removes 'Name a', pluralizes, and fixes has/have."""
     # "Name a French player" -> "French players"
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
     # "Name a player" -> "Players"
@@ -61,6 +61,10 @@ def grid_text_formatter(text):
     text = re.sub(r"Name a stadium", "Stadiums", text)
     # "Name a manager" -> "Managers"
     text = re.sub(r"Name a manager", "Managers", text)
+    
+    # Fix grammar: "Players who has" -> "Players who have"
+    text = text.replace("players who has", "players who have")
+    text = text.replace("Players who has", "Players who have")
     return text
 
 def smart_pluralize(text, count):
@@ -71,6 +75,9 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
+    
+    # Fix grammar for count > 1: "Name 3 players who has" -> "Name 3 players who have"
+    text = text.replace("players who has", "players who have")
     return text
 
 def articulate_task(subject_type, target, action="played for"):
@@ -276,7 +283,7 @@ else:
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
         
-        # Apply "smart text" formatting only for the grid box display
+        # Apply "smart text" formatting with grammar fix for the grid box display
         grid_display_text = grid_text_formatter(item["task"]) if i not in [0, len(st.session_state.grid_map)-1] else item["task"]
         
         grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>{format_header_icons(item["assets"])}<div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{grid_display_text}</div><div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
@@ -305,7 +312,7 @@ else:
                 current_assets = st.session_state.grid_map[player['pos']]['assets']
                 task_text = st.session_state.grid_map[player['pos']]['task']
             
-            # Use original smart pluralization for the sidebar prompt
+            # Use smart pluralization with grammar fix for the sidebar prompt
             display_text = smart_pluralize(task_text, st.session_state.current_roll)
 
             with st.container(border=True):
