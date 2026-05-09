@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 
-# --- 1. DATA MAPPING (Flags & Clubs) ---
+# --- 1. DATA MAPPING (Flags & TheSportsDB IDs) ---
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
@@ -11,28 +11,29 @@ COUNTRY_DATA = {
     "Argentinian": "ar", "Argentina": "ar"
 }
 
-# Mapping names to domains for the Hunter.io Logo API
-CLUB_DOMAINS = {
-    "Real Madrid": "realmadrid.com", "Barcelona": "fcbarcelona.com",
-    "Man Utd": "manutd.com", "Manchester United": "manutd.com",
-    "Liverpool": "liverpoolfc.com", "Bayern Munich": "fcbayern.com",
-    "AC Milan": "acmilan.com", "Juventus": "juventus.com",
-    "Chelsea": "chelseafc.com", "Inter Milan": "inter.it",
-    "PSG": "psg.fr", "Arsenal": "arsenal.com", "Man City": "mancity.com"
+# Mapping names to TheSportsDB internal IDs for maximum reliability
+# These IDs point directly to the team's asset folder in their API
+CLUB_LOGOS = {
+    "Real Madrid": "133739", "Barcelona": "133738",
+    "Man Utd": "133612", "Manchester United": "133612",
+    "Liverpool": "133602", "Bayern Munich": "133664",
+    "AC Milan": "133667", "Juventus": "133676",
+    "Chelsea": "133610", "Inter Milan": "133669",
+    "PSG": "133714", "Arsenal": "133604", "Man City": "133613"
 }
 
 def get_club_logo(text):
-    """Detects club names and returns HTML for logos using Hunter.io."""
+    """Fetches official high-res badges from TheSportsDB CDN."""
     logo_html = ""
-    for club, domain in CLUB_DOMAINS.items():
+    for club, team_id in CLUB_LOGOS.items():
         if club.lower() in text.lower():
-            # Hunter.io is a reliable 2026 alternative to Clearbit
-            url = f"https://hunter.io/api/logo/{domain}"
-            logo_html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-right:6px; border-radius:3px; border:1px solid #444;">'
+            # Use TheSportsDB's direct preview CDN URL
+            url = f"https://www.thesportsdb.com/images/media/team/badge/tiny/{team_id}.png"
+            logo_html += f'<img src="{url}" style="height:22px; vertical-align:middle; margin-right:6px;">'
     return logo_html
 
 def clean_text_and_add_assets(text):
-    """Adds flags and working club logos to the text."""
+    """Preserves your UI while adding working flags and logos."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
     # Flags logic
@@ -43,12 +44,12 @@ def clean_text_and_add_assets(text):
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    # Club Logo logic
+    # Club Logo logic (TheSportsDB Fix)
     logo_html = get_club_logo(clean_text)
     
     return f"{logo_html}{clean_text}{flag_html}"
 
-# --- 2. STRUCTURED LOGIC GENERATOR ---
+# --- 2. LOGIC GENERATORS (Unchanged) ---
 def generate_final_challenge():
     big_clubs = ["Real Madrid", "Barcelona", "Man Utd", "Liverpool", "Bayern Munich", "AC Milan", "Juventus", "Chelsea", "Inter Milan", "PSG", "Arsenal", "Man City"]
     nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
@@ -79,7 +80,7 @@ CRITERIA_POOL = [
     "Name a Belgian player who has played in the Premier League"
 ]
 
-# --- 3. STATE REFRESH LOGIC ---
+# --- 3. STATE REFRESH LOGIC (Clean Slate) ---
 def reset_all_data():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -112,7 +113,7 @@ def start_game():
     }
     st.session_state.game_started = True
 
-# --- 4. UI ---
+# --- 4. ORIGINAL UI LAYOUT ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
