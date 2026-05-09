@@ -50,11 +50,16 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
 def articulate_task(subject_type, target, action="played for"):
+    # Grammar Fix: Strip nested phrasing if target is passed accidentally as a full task
+    clean_target = target.replace("Name a player who ", "").replace("won ", "").replace("has won ", "").replace("the ", "")
+    
     article = "an" if subject_type[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
     needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
                  "Europa League", "World Cup", "Euros", "Copa America", 
                  "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
-    final_target = f"the {target}" if target in needs_the else target
+    
+    final_target = f"the {clean_target}" if clean_target in needs_the else clean_target
+    
     if subject_type == "player":
         return f"Name a player who {action} {final_target}"
     return f"Name {article} {subject_type} player who {action} {final_target}"
@@ -67,15 +72,19 @@ def get_assets(text):
     if "assists" in clean_text: assets["emojis"].append("👟")
     if "clean sheets" in clean_text: assets["emojis"].append("🧤")
     if "bookings" in clean_text: assets["emojis"].append("😵")
+    
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+            
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+            
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
+    
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -84,6 +93,7 @@ def get_assets(text):
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
+                
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in clean_text:
             assets["emojis"].append(emoji)
@@ -119,7 +129,6 @@ def generate_random_task(categories):
     if "N+ Stats" in categories: pool.extend([10, 11])
     
     if not pool: return "N/A"
-    
     template_type = random.choice(pool)
     
     if template_type == 10:
@@ -131,7 +140,7 @@ def generate_random_task(categories):
             return f"Name a player who has {n_value}+ {stat.lower()} in his career"
         else:
             comp = "Champions League" if scope == "CL" else random.choice(["Premier League", "La Liga", "Serie A"])
-            return f"Name a player who has {n_value}+ {stat.lower()} in {articulate_task('player', comp).split('won ')[-1]}"
+            return f"Name a player who has {n_value}+ {stat.lower()} in {comp}"
     elif template_type == 11:
         nation = random.choice(["English", "Spanish", "French", "Brazilian", "Argentinian", "German"])
         comp = random.choice(["Premier League", "La Liga", "Bundesliga"])
@@ -192,7 +201,7 @@ def start_game():
         attempts += 1
     
     if len(unique_tasks) < (total_sq - 2):
-        st.error(f"Error: Could only generate {len(unique_tasks)} unique tasks. Select more categories or reduce grid size.")
+        st.error(f"Error: Could only generate {len(unique_tasks)} unique tasks.")
         return False
 
     for task_text in list(unique_tasks):
@@ -224,39 +233,26 @@ elif not st.session_state.game_started:
         c1, c2 = st.columns(2)
         st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
-        
-        # Default all selected by providing the full list as the default
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
             default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"],
             key="cat_filter")
-        
-        required_tasks = (st.session_state.grid_size ** 2) - 2
-        if not st.session_state.selected_categories:
-            st.error("Please select at least one category to generate questions.")
-            can_start = False
-        else:
-            can_start = True
+        can_start = bool(st.session_state.selected_categories)
 
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     
     if st.button("🚀 START MATCH", use_container_width=True, type="primary", disabled=not can_start):
-        if start_game():
-            st.rerun()
+        if start_game(): st.rerun()
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
-    st.markdown(f"""
-        <style>
+    st.markdown(f"""<style>
         .grid-container {{ display: grid; gap: 12px; grid-template-columns: repeat({st.session_state.grid_size}, 1fr); }}
         .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
         .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
         .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
-        [data-testid="stSidebar"] {{ padding-top: 1rem; }}
-        .stButton button {{ margin-bottom: -10px; }}
-        </style>
-    """, unsafe_allow_html=True)
+        </style>""", unsafe_allow_html=True)
 
     grid_html = '<div class="grid-container">'
     for i, item in enumerate(st.session_state.grid_map):
@@ -267,24 +263,41 @@ else:
 
     with st.sidebar:
         st.markdown(f"<h3 style='text-align:center; color:{player['color']}; margin-top: -30px; margin-bottom: 10px;'>{player['name']}</h3>", unsafe_allow_html=True)
+        
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
                 player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                
+                # Check for final whistle and pre-generate task to prevent race condition error
                 if player['pos'] == len(st.session_state.grid_map)-1:
                     t = generate_random_task(st.session_state.selected_categories)
                     st.session_state.active_final_task = {"text": t, "assets": get_assets(t)}
-                st.session_state.rolled = True; st.rerun()
+                
+                st.session_state.rolled = True
+                st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
-            task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
+            
+            # --- FIXED ERROR SECTION ---
+            # Safely check if we are on the last square AND the task has been created
+            is_last_square = player['pos'] == len(st.session_state.grid_map) - 1
+            
+            if is_last_square and st.session_state.active_final_task:
+                current_assets = st.session_state.active_final_task['assets']
+                task_text = st.session_state.active_final_task['text']
+            else:
+                current_assets = st.session_state.grid_map[player['pos']]['assets']
+                task_text = st.session_state.grid_map[player['pos']]['task']
+            # ---------------------------
+
             with st.container(border=True):
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
                 st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{task_text}</div>", unsafe_allow_html=True)
+            
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
-                if player['pos'] == len(st.session_state.grid_map) - 1: st.session_state.winner = player
+                if is_last_square: st.session_state.winner = player
                 else: 
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
@@ -294,6 +307,7 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
+
         st.markdown("---")
         if not st.session_state.confirm_reset:
             if st.button("🚩 End Game", use_container_width=True):
@@ -304,5 +318,4 @@ else:
             if rc1.button("Confirm", type="primary", use_container_width=True):
                 reset_all_data()
             if rc2.button("Cancel", use_container_width=True):
-                st.session_state.confirm_reset = False
-                st.rerun()
+                st.session_state.confirm_reset = False; st.rerun()
