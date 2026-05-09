@@ -28,14 +28,14 @@ ESPN_LOGOS = {
 
 STADIUM_COUNTRIES = ["England", "Spain", "Germany", "Italy", "France", "Portugal", "Brazil", "Argentina", "Mexico"]
 
+# Updated color map with Green and simplified Black
 KIT_COLOR_MAP = {
-    "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Black & White": "🏁"
+    "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
-    # Check for trophy questions first to prioritize the trophy emoji
     if "🏆" in text:
         assets["emojis"].append("🏆")
     if "stadium" in text.lower():
@@ -69,7 +69,6 @@ def clean_text_via_regex(text):
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    # Use a set to avoid duplicate emojis (like double trophies)
     for e in list(dict.fromkeys(assets["emojis"])):
         html += f'<span style="font-size:{size_emojis};">{e}</span>'
     for f in assets["flags"]:
@@ -85,7 +84,6 @@ def generate_random_task():
     nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     manager_clubs = ['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan']
-    
     trophies = ["the Champions League", "the World Cup", "the FA Cup", "the Premier League", "the Euros", "the Copa America"]
     
     nation = random.choice(nations)
@@ -99,7 +97,6 @@ def generate_random_task():
         lambda: f"Name a manager who managed {random.choice(manager_clubs)}",
         lambda: f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}",
         lambda: f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}",
-        # Trophy specific questions
         lambda: f"🏆 Name a player who has won {random.choice(trophies)}",
         lambda: f"🏆 Name a team that has won {random.choice(trophies)}"
     ]
@@ -126,7 +123,6 @@ def start_game():
     unique_tasks = set()
     while len(unique_tasks) < (total_sq - 2):
         new_task = generate_random_task()
-        # Normalize "both" tasks for uniqueness
         if "both" in new_task:
             parts = new_task.split("both ")[1].split(" & ")
             new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
@@ -180,7 +176,6 @@ else:
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        # Clean text for board display (remove the emoji used for asset logic)
         display_task = item["task"].replace("🏆 ", "")
         grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>{format_header_icons(item["assets"])}<div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{display_task}</div><div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
@@ -202,11 +197,7 @@ else:
             
             current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
             raw_task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
-            
-            # Remove helper emoji from display text
             display_task_text = raw_task_text.replace("🏆 ", "")
-            
-            # Singular/Plural logic
             word_choice = "answer" if st.session_state.current_roll == 1 else "answers"
 
             with st.container(border=True):
