@@ -60,64 +60,6 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. ENGINES ---
 @st.cache_data(show_spinner=False)
-def get_answer_logic(task_text):
-    t_lower = task_text.lower()
-    ans_list = []
-    
-    # --- 1. CLUB CONNECTIONS (Unchanged) ---
-    if "both" in t_lower:
-        match = re.search(r"both (.*?) & (.*)", task_text)
-        if match:
-            c1, c2 = match.group(1).strip(), match.group(2).strip()
-            ans_list = fetch_shared_players(c1, c2)
-
-    # --- 2. EXPANDED TROPHY DATA (All Historical Winners) ---
-    TROPHY_DATA = {
-        "bundesliga": ["Bayern Munich", "Borussia Dortmund", "Borussia Mönchengladbach", "Werder Bremen", "Hamburger SV", "VfB Stuttgart", "FC Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nuremberg", "Eintracht Braunschweig", "Bayer Leverkusen", "Schalke 04", "Hertha BSC", "Rapid Vienna", "Mannheim", "Dresdner SC", "Hannover 96", "Fortuna Düsseldorf", "SpVgg Fürth", "Viktoria 89 Berlin", "Union Berlin", "Holstein Kiel", "Karlsruher FV", "Phönix Karlsruhe", "Freiburger FC"],
-        "premier league": ["Manchester United", "Liverpool", "Arsenal", "Manchester City", "Everton", "Aston Villa", "Chelsea", "Sunderland", "Newcastle United", "Sheffield Wednesday", "Blackburn Rovers", "Huddersfield Town", "Leeds United", "Wolverhampton Wanderers", "Burnley", "Derby County", "Preston North End", "Portsmouth", "Tottenham Hotspur", "Ipswich Town", "Leicester City", "Nottingham Forest", "Sheffield United", "West Bromwich Albion"],
-        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Athletic Bilbao", "Valencia", "Real Sociedad", "Deportivo La Coruña", "Sevilla", "Real Betis"],
-        "serie a": ["Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"],
-        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", "Manchester United", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Chelsea", "Celtic", "Hamburg", "Steaua București", "Marseille", "Borussia Dortmund", "Feyenoord", "Aston Villa", "PSV Eindhoven", "Red Star Belgrade", "Manchester City"],
-        "world cup": ["Brazil", "Germany", "Italy", "Argentina", "France", "Uruguay", "Spain", "England"],
-        "euros": ["Germany", "Spain", "Italy", "France", "Russia", "Czech Republic", "Portugal", "Netherlands", "Denmark", "Greece"]
-    }
-
-    if not ans_list and ("won" in t_lower or "winner" in t_lower):
-        for trophy, winners in TROPHY_DATA.items():
-            if trophy in t_lower:
-                ans_list = winners
-
-    return ans_list
-
-    # --- 3. STADIUMS ---
-    STADIUM_DATA = {
-        "england": ["Wembley", "Old Trafford", "Anfield", "Emirates", "St James' Park", "Etihad", "Tottenham Hotspur Stadium", "Villa Park", "Stamford Bridge", "Goodison Park", "Elland Road", "Hillsborough"],
-        "spain": ["Santiago Bernabéu", "Camp Nou", "Metropolitano", "Mestalla", "San Mamés", "Ramón Sánchez Pizjuán", "Benito Villamarín", "Reale Arena"],
-        "germany": ["Allianz Arena", "Signal Iduna Park", "Olympiastadion", "Veltins-Arena", "Deutsche Bank Park", "RheinEnergieStadion"],
-        "italy": ["San Siro", "Stadio Olimpico", "Juventus Stadium", "Stadio Diego Armando Maradona", "Stadio Luigi Ferraris", "Stadio Artemio Franchi"],
-        "france": ["Stade de France", "Parc des Princes", "Stade Vélodrome", "Groupama Stadium", "Stade Pierre-Mauroy", "Matmut Atlantique"]
-    }
-    if not ans_list and "stadium" in t_lower:
-        for country, stadiums in STADIUM_DATA.items():
-            if country in t_lower:
-                ans_list = stadiums
-
-    # --- 4. KITS ---
-    KIT_DATA = {
-        "red": ["Liverpool", "Man United", "Arsenal", "Bayern Munich", "Benfica", "Ajax", "AC Milan", "Sevilla", "Nottingham Forest", "RB Leipzig"],
-        "blue": ["Chelsea", "Man City", "Everton", "Leicester", "Napoli", "Inter Milan", "PSG", "Porto", "Schalke", "Lazio", "Rangers"],
-        "white": ["Real Madrid", "Tottenham", "Valencia", "Lyon", "Leeds United", "Fulham", "Derby County", "Swansea City"],
-        "yellow": ["Dortmund", "Villarreal", "Watford", "Norwich City", "Fenerbahce", "Cadiz", "Al-Nassr"],
-        "green": ["Celtic", "Sporting CP", "Real Betis", "Sassuolo", "Palmeiras", "Saint-Étienne", "Werder Bremen", "Wolfsburg"],
-        "black": ["Eintracht Frankfurt", "Boavista", "PAOK", "Besiktas"]
-    }
-    if not ans_list and "kit color" in t_lower:
-        for color, teams in KIT_DATA.items():
-            if color in t_lower:
-                ans_list = teams
-
-    return ans_list
-
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
     if not id1 or not id2: return []
@@ -382,41 +324,33 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- SIDEBAR LOGIC ---
-if not st.session_state.rolled:
-    st.write("Please roll the dice to get a task!")
-else:
-    # 1. Define the task first
-    task_text = st.session_state.grid_map[player['pos']]['task']
-    st.info(f"Task: {task_text}")
-    
-    # 2. Get the list of answers from your engine
-    all_answers = get_answer_logic(task_text)
-    n = len(all_answers)
+            # --- ANSWERS SECTION ---
+            with st.expander("👁️ View Answers"):
+                if "both" in task_text.lower():
+                    match = re.search(r"both (.*?) & (.*)", task_text)
+                    if match:
+                        c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
+                        ans_list = fetch_shared_players(c1_name, c2_name)
+                        if ans_list: 
+                            st.write(", ".join(ans_list[:15]))
+                        else: 
+                            st.info("No common players found in quick-lookup.")
+                
+                # Link for all questions
+                search_query = task_text.replace("Name a", "").strip()
+                st.markdown(f"""
+                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
+                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555;">
+                        🔍 Search for Answers
+                    </div>
+                </a>
+                """, unsafe_allow_html=True)
 
-    # 3. Display the View Answers expander with the count (n)
-    with st.expander(f"👁️ View Answers ({n})"):
-        if n > 0:
-            # Join answers into clean rows with bullet points
-            formatted_rows = "\n".join([f"* {item}" for item in all_answers])
-            st.markdown(formatted_rows)
+        st.markdown("---")
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Game", use_container_width=True): st.session_state.confirm_reset = True; st.rerun()
         else:
-            st.write("No answers found in database.")
-
-    st.markdown("---")
-    
-    # --- GAME CONTROLS (End Game Buttons) ---
-    if not st.session_state.confirm_reset:
-        if st.button("🚩 End Game", use_container_width=True): 
-            st.session_state.confirm_reset = True
-            st.rerun()
-    else:
-        st.warning("Confirm Reset?")
-        rc1, rc2 = st.columns(2)
-        if rc1.button("Confirm", type="primary", use_container_width=True): 
-            # Make sure reset_all_data() is defined in your script
-            st.session_state.clear() 
-            st.rerun()
-        if rc2.button("Cancel", use_container_width=True): 
-            st.session_state.confirm_reset = False
-            st.rerun()
+            st.warning("Confirm Reset?")
+            rc1, rc2 = st.columns(2)
+            if rc1.button("Confirm", type="primary", use_container_width=True): reset_all_data()
+            if rc2.button("Cancel", use_container_width=True): st.session_state.confirm_reset = False; st.rerun()
