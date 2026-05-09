@@ -66,23 +66,59 @@ def get_answer_logic(task_text):
     
     # --- HARDCODED DATASETS ---
     TROPHY_DATA = {
-        "bundesliga": ["Bayern Munich", "Borussia Dortmund", "Bayer Leverkusen", "Werder Bremen", "Stuttgart", "Wolfsburg"],
-        "premier league": ["Man Utd", "Liverpool", "Man City", "Arsenal", "Chelsea", "Leicester", "Blackburn"],
-        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla", "Real Betis"],
-        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Inter Milan", "Man Utd", "Chelsea", "Man City"]
-    }
+    "bundesliga": [
+        "Bayern Munich", "Borussia Dortmund", "Borussia Mönchengladbach", "Werder Bremen", "Hamburger SV", 
+        "VfB Stuttgart", "FC Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nuremberg", 
+        "Eintracht Braunschweig", "Bayer Leverkusen", "Schalke 04", "Hertha BSC", "Rapid Vienna", 
+        "VfR Mannheim", "Dresdner SC", "Hannover 96", "Fortuna Düsseldorf", "SpVgg Fürth", 
+        "Viktoria 89 Berlin", "Union Berlin", "Holstein Kiel", "Karlsruher FV", "Phönix Karlsruhe", 
+        "Freiburger FC", "VfB Leipzig", "SpVgg Blau-Weiß 1890 Berlin", "Rot-Weiss Essen"
+    ],
+    "premier league": [
+        "Manchester United", "Liverpool", "Arsenal", "Manchester City", "Everton", "Aston Villa", 
+        "Sunderland", "Chelsea", "Newcastle United", "Sheffield Wednesday", "Blackburn Rovers", 
+        "Huddersfield Town", "Leeds United", "Wolverhampton Wanderers", "Burnley", "Derby County", 
+        "Preston North End", "Portsmouth", "Tottenham Hotspur", "Ipswich Town", "Leicester City", 
+        "Nottingham Forest", "Sheffield United", "West Bromwich Albion"
+    ],
+    "la liga": [
+        "Real Madrid", "Barcelona", "Atletico Madrid", "Athletic Bilbao", "Valencia", 
+        "Real Sociedad", "Deportivo La Coruña", "Sevilla", "Real Betis"
+    ],
+    "serie a": [
+        "Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", 
+        "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"
+    ],
+    "champions league": [
+        "Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", 
+        "Manchester United", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Chelsea", "Celtic", 
+        "Hamburg", "Steaua București", "Marseille", "Borussia Dortmund", "Feyenoord", "Aston Villa", 
+        "PSV Eindhoven", "Red Star Belgrade", "Manchester City"
+    ]
+}
     STADIUM_DATA = {
-        "england": ["Wembley", "Old Trafford", "Tottenham Stadium", "Emirates", "Anfield", "Etihad", "St James' Park"],
-        "spain": ["Camp Nou", "Bernabéu", "Metropolitano", "Mestalla", "San Mamés", "Sánchez Pizjuán"],
-        "germany": ["Signal Iduna Park", "Allianz Arena", "Olympiastadion", "Veltins-Arena", "Deutsche Bank Park"]
-    }
-    KIT_DATA = {
-        "red": ["Liverpool", "Man Utd", "Arsenal", "Bayern Munich", "Benfica", "Ajax"],
-        "blue": ["Chelsea", "Man City", "Everton", "Napoli", "Inter Milan", "PSG", "Lazio"],
-        "white": ["Real Madrid", "Tottenham", "Valencia", "Leeds", "Lyon", "Santos"],
-        "yellow": ["Dortmund", "Villarreal", "Watford", "Norwich", "Cádiz"],
-        "green": ["Celtic", "Sporting CP", "Real Betis", "Palmeiras", "Sassuolo"]
-    }
+    "england": [
+        "Wembley", "Twickenham", "Old Trafford", "Tottenham Hotspur Stadium", "London Stadium", 
+        "Anfield", "Emirates Stadium", "Etihad Stadium", "St James' Park", "Stadium of Light", 
+        "Villa Park", "Stamford Bridge", "Goodison Park", "Hillsborough", "Elland Road", 
+        "Riverside Stadium", "Pride Park", "King Power Stadium", "Bramall Lane", "St Mary's Stadium", 
+        "Molineux", "Falmer Stadium", "Ricoh Arena", "Ewood Park", "City Ground"
+    ],
+    "spain": [
+        "Camp Nou", "Santiago Bernabéu", "Metropolitano", "Benito Villamarín", "Estadi Olímpic Lluís Companys", 
+        "San Mamés", "Mestalla", "Ramón Sánchez Pizjuán", "La Cartuja", "Reale Arena", 
+        "RCDE Stadium", "Abanca-Balaídos", "Gran Canaria", "Martinez Valero", "La Romareda", 
+        "Riazor", "El Molinón", "Nueva Condomina", "Estadi de Son Moix", "Ciutat de València", 
+        "Estadio de la Cerámica", "Nuevo Arcángel", "Nuevo Colombino", "Heliodoro Rodríguez López", "Mendizorroza"
+    ],
+    "germany": [
+        "Signal Iduna Park", "Allianz Arena", "Olympiastadion Berlin", "Veltins-Arena", "Deutsche Bank Park", 
+        "Stuttgart Arena", "Volksparkstadion", "Merkur Spiel-Arena", "RheinEnergieStadion", "Borussia-Park", 
+        "Red Bull Arena", "Fritz-Walter-Stadion", "Weserstadion", "Europa-Park Stadion", "HDI-Arena", 
+        "Max-Morlock-Stadion", "WWK Arena", "PreZero Arena", "Millerntor-Stadion", "Wildparkstadion", 
+        "MDCC-Arena", "Eintracht-Stadion", "Schauinsland-Reisen-Arena", "Home Deluxe Arena", "Ludwigsparkstadion"
+    ]
+}
 
     # Search logic
     for league, winners in TROPHY_DATA.items():
