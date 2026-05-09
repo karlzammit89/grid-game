@@ -64,28 +64,34 @@ def get_answer_logic(task_text):
     t_lower = task_text.lower()
     ans_list = []
     
-    # --- 1. CLUB CONNECTIONS ---
+    # --- 1. CLUB CONNECTIONS (Unchanged) ---
     if "both" in t_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
             ans_list = fetch_shared_players(c1, c2)
 
-    # --- 2. TROPHIES ---
+    # --- 2. EXPANDED TROPHY DATA (All Historical Winners) ---
+    # Includes Pre-Bundesliga German Champions and full historical records
     TROPHY_DATA = {
-        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", "Man United", "Chelsea", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Celtic", "Hamburg", "Steaua București", "Marseille", "Dortmund", "Feyenoord", "Aston Villa", "PSV Eindhoven", "Red Star Belgrade", "Man City"],
-        "premier league": ["Man United", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester City", "Blackburn Rovers"],
-        "world cup": ["Brazil", "Germany", "Italy", "Argentina", "France", "Uruguay", "Spain", "England"],
-        "euros": ["Germany", "Spain", "Italy", "France", "Russia", "Czech Republic", "Portugal", "Netherlands", "Denmark", "Greece"],
-        "fa cup": ["Arsenal", "Man United", "Chelsea", "Liverpool", "Tottenham", "Aston Villa", "Man City", "Newcastle", "Blackburn", "Everton", "West Brom", "Wolverhampton", "Sheffield Utd", "Bolton", "Old Etonians", "Portsmouth", "Sunderland", "Wigan"],
+        "bundesliga": ["Bayern Munich", "Borussia Dortmund", "Borussia Mönchengladbach", "Werder Bremen", "Hamburger SV", "VfB Stuttgart", "FC Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nuremberg", "Eintracht Braunschweig", "Bayer Leverkusen", "Schalke 04", "Hertha BSC", "Rapid Vienna", "Mannheim", "Dresdner SC", "Hannover 96", "Fortuna Düsseldorf", "SpVgg Fürth", "Viktoria 89 Berlin", "Union Berlin", "Holstein Kiel", "Karlsruher FV", "Phönix Karlsruhe", "Freiburger FC"],
+        "premier league": ["Manchester United", "Liverpool", "Arsenal", "Manchester City", "Everton", "Aston Villa", "Chelsea", "Sunderland", "Newcastle United", "Sheffield Wednesday", "Blackburn Rovers", "Huddersfield Town", "Leeds United", "Wolverhampton Wanderers", "Burnley", "Derby County", "Preston North End", "Portsmouth", "Tottenham Hotspur", "Ipswich Town", "Leicester City", "Nottingham Forest", "Sheffield United", "West Bromwich Albion"],
         "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Athletic Bilbao", "Valencia", "Real Sociedad", "Deportivo La Coruña", "Sevilla", "Real Betis"],
         "serie a": ["Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"],
-        "bundesliga": ["Bayern Munich", "Dortmund", "Mönchengladbach", "Werder Bremen", "Hamburger SV", "Stuttgart", "Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nürnberg", "Eintracht Braunschweig", "Bayer Leverkusen"]
+        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", "Manchester United", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Chelsea", "Celtic", "Hamburg", "Steaua București", "Marseille", "Borussia Dortmund", "Feyenoord", "Aston Villa", "PSV Eindhoven", "Red Star Belgrade", "Manchester City"],
+        "world cup": ["Brazil", "Germany", "Italy", "Argentina", "France", "Uruguay", "Spain", "England"],
+        "euros": ["Germany", "Spain", "Italy", "France", "Russia", "Czech Republic", "Portugal", "Netherlands", "Denmark", "Greece"]
     }
+
     if not ans_list and ("won" in t_lower or "winner" in t_lower):
         for trophy, winners in TROPHY_DATA.items():
             if trophy in t_lower:
                 ans_list = winners
+
+    # --- 3. STADIUMS & KITS (Optional: Can keep previous logic) ---
+    # (Existing stadium and kit data blocks here)
+
+    return ans_list
 
     # --- 3. STADIUMS ---
     STADIUM_DATA = {
