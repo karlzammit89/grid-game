@@ -19,21 +19,21 @@ ESPN_LOGOS = {
     "Inter Milan": "110", "PSG": "160", "Arsenal": "359", "Man City": "382"
 }
 
-def get_club_logo(text):
-    """Fetches high-quality badges from ESPN's production CDN."""
-    logo_html = ""
+def get_club_logo_html(text):
+    """Generates HTML for ESPN badges matched to flag height."""
+    html = ""
     for club, espn_id in ESPN_LOGOS.items():
         if club.lower() in text.lower():
-            # ESPN CDN URL format for transparent PNGs
             url = f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png"
-            logo_html += f'<img src="{url}" style="height:28px; vertical-align:middle; margin-right:8px;">'
-    return logo_html
+            # Height set to 14px to match flag emoji/image height
+            html += f'<img src="{url}" style="height:14px; vertical-align:middle; margin-left:6px;">'
+    return html
 
 def clean_text_and_add_assets(text):
-    """Injects ESPN logos and country flags into task text."""
+    """Cleans text and appends logos/flags to the END of the string."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
-    # Flags logic
+    # Generate Flag HTML
     flag_html = ""
     for word, iso in COUNTRY_DATA.items():
         if word.lower() in clean_text.lower():
@@ -41,8 +41,11 @@ def clean_text_and_add_assets(text):
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    logo_html = get_club_logo(clean_text)
-    return f"{logo_html}{clean_text}{flag_html}"
+    # Generate Logo HTML
+    logo_html = get_club_logo_html(clean_text)
+    
+    # Append both to the end of the question text
+    return f"{clean_text} {logo_html}{flag_html}"
 
 # --- 2. LOGIC GENERATORS ---
 def generate_final_challenge():
@@ -91,7 +94,6 @@ if 'game_started' not in st.session_state:
     })
 
 def start_game():
-    # Dynamic Grid Calculation (4x4, 5x5, etc.)
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
     selected_tasks = random.sample(CRITERIA_POOL * 5, total_sq - 2)
@@ -132,7 +134,6 @@ elif not st.session_state.game_started:
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
-    # DYNAMIC GRID CSS: Uses the grid_size to force even columns
     st.markdown(f"""
         <style>
         .grid-container {{ 
