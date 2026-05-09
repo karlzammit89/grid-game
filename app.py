@@ -3,9 +3,7 @@ import random
 import time
 
 # --- 1. GLOBAL FLAG MAPPING ---
-# Comprehensive mapping for footballing nations and adjectives
 FLAG_MAP = {
-    # Europe
     "Spanish": "🇪🇸", "Spain": "🇪🇸", "English": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
     "Italian": "🇮🇹", "Italy": "🇮🇹", "German": "🇩🇪", "Germany": "🇩🇪",
     "French": "🇫🇷", "France": "🇫🇷", "Portuguese": "🇵🇹", "Portugal": "🇵🇹",
@@ -13,33 +11,19 @@ FLAG_MAP = {
     "Belgian": "🇧🇪", "Belgium": "🇧🇪", "Turkish": "🇹🇷", "Turkey": "🇹🇷",
     "Scottish": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Welsh": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
     "Swiss": "🇨🇭", "Switzerland": "🇨🇭", "Danish": "🇩🇰", "Denmark": "🇩🇰",
-    "Swedish": "🇸🇪", "Sweden": "🇸🇪", "Norwegian": "🇳🇴", "Norway": "🇳🇴",
-    "Polish": "🇵🇱", "Poland": "🇵🇱", "Austrian": "🇦🇹", "Austria": "🇦🇹",
-    "Greek": "🇬🇷", "Greece": "🇬🇷", "Ukrainian": "🇺🇦", "Ukraine": "🇺🇦",
-    # South America
     "Brazilian": "🇧🇷", "Brazil": "🇧🇷", "Argentinian": "🇦🇷", "Argentina": "🇦🇷",
-    "Uruguayan": "🇺🇾", "Uruguay": "🇺🇾", "Colombian": "🇨🇴", "Colombia": "🇨🇴",
-    "Chilean": "🇨🇱", "Chile": "🇨🇱", "Paraguayan": "🇵🇾", "Paraguay": "🇵🇾",
-    # Africa
-    "African": "🌍", "Egyptian": "🇪🇬", "Egypt": "🇪🇬", "Senegalese": "🇸🇳", "Senegal": "🇸🇳",
-    "Moroccan": "🇲🇦", "Morocco": "🇲🇦", "Nigerian": "🇳🇬", "Nigeria": "🇳🇬",
-    "Ivorian": "🇨🇮", "Ivory Coast": "🇨🇮", "Cameroonian": "🇨🇲", "Cameroon": "🇨🇲",
-    "Algerian": "🇩🇿", "Algeria": "🇩🇿", "Ghanaian": "🇬🇭", "Ghana": "🇬🇭",
-    # Others
-    "American": "🇺🇸", "USA": "🇺🇸", "Mexican": "🇲🇽", "Mexico": "🇲🇽",
-    "Japanese": "🇯🇵", "Japan": "🇯🇵", "Korean": "🇰🇷", "South Korea": "🇰🇷",
-    "Australian": "🇦🇺", "Australia": "🇦🇺"
+    "Uruguayan": "🇺🇾", "Uruguay": "🇺🇾", "African": "🌍", "Egyptian": "🇪🇬", 
+    "Senegalese": "🇸🇳", "Moroccan": "🇲🇦", "Nigerian": "🇳🇬", "Japanese": "🇯🇵", 
+    "Mexican": "🇲🇽", "Colombian": "🇨🇴", "American": "🇺🇸"
 }
 
 def inject_flags(text):
-    """Automatically detects country keywords and appends the correct flag."""
     for word, emoji in FLAG_MAP.items():
-        # Check for word boundaries to avoid partial matches (e.g., 'A' in 'Arsenal')
         if f" {word} " in f" {text} " and emoji not in text:
             return f"{text} {emoji}"
     return text
 
-# --- 2. EXPANDED CRITERIA POOL ---
+# --- 2. CRITERIA POOL ---
 CRITERIA_POOL = [
     {"task": "Played for both Barcelona & Inter", "icon": "🔵🔴"},
     {"task": "Name a Spanish Stadium", "icon": "🏟️"},
@@ -64,16 +48,12 @@ CRITERIA_POOL = [
     {"task": "Senegalese players to score in the PL", "icon": "🇸🇳"},
     {"task": "Moroccan players to play in La Liga", "icon": "🇲🇦"},
     {"task": "Japanese players in the Bundesliga", "icon": "🇯🇵"},
-    {"task": "Swiss players to win a major trophy", "icon": "🇨🇭"},
     {"task": "Colombian goalscorers in Europe", "icon": "🇨🇴"},
-    {"task": "Swedish players to play for AC Milan", "icon": "🇸🇪"},
-    {"task": "Nigerian players to play for Arsenal", "icon": "🦅"},
     {"task": "Danish players to play for Man Utd", "icon": "🇩🇰"},
-    {"task": "Ivorian legends in the Premier League", "icon": "🇨🇮"},
-    {"task": "Greek clubs to play in European competitions", "icon": "🇬🇷"}
+    {"task": "Ivorian legends in the Premier League", "icon": "🇨🇮"}
 ]
 
-# --- 3. STATE MANAGEMENT & GAMEPLAY ---
+# --- 3. STATE MANAGEMENT ---
 if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'max_dice': 3,
@@ -85,15 +65,11 @@ if 'game_started' not in st.session_state:
 def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF", "icon": "🏁"}]
-    
-    # Select unique tasks and apply auto-flag injection
     pool = random.sample(CRITERIA_POOL, min(len(CRITERIA_POOL), total_sq - 2))
     for item in pool:
         item["task"] = inject_flags(item["task"])
-        
     board.extend(pool)
     board.append({"task": "FINAL WHISTLE", "icon": "🏆"})
-    
     st.session_state.grid_map = board
     st.session_state.player_data = {
         i: {
@@ -118,11 +94,12 @@ if not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
         c1, c2, c3 = st.columns(3)
-        st.session_state.grid_size = c1.selectbox("Grid Size", [3, 4, 5, 6], index=1)
-        st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
-        st.session_state.max_dice = c3.selectbox("Max Dice Roll", [1, 2, 3, 4, 5, 6], index=2)
+        # All setup inputs now use the +/- number_input style
+        st.session_state.grid_size = c1.number_input("Grid Dimensions (N x N)", 3, 6, 4)
+        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
+        st.session_state.max_dice = c3.number_input("Max Dice Roll", 1, 6, 3)
     
-    st.subheader("👤 Enter Manager Names")
+    st.subheader("👤 Manager Names")
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     
@@ -131,13 +108,11 @@ if not st.session_state.game_started:
         st.rerun()
 
 else:
+    # Game Logic & Grid Rendering
     player = st.session_state.player_data[st.session_state.turn]
-    
-    # CSS for a polished look
     tags_css = "".join([f".p-tag-{i} {{ background: {PLAYER_COLORS[i]}; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; margin: 2px; border: 2px solid #fff; }}" for i in range(4)])
-    st.markdown(f"<style>.grid-container {{ display: grid; gap: 12px; }}.grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 15px; text-align: center; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; }}.active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}.task-text {{ font-weight: 600; font-size: 0.9rem; color: #eee; }}{tags_css}</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>.grid-container {{ display: grid; gap: 12px; }}.grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 15px; text-align: center; min-height: 145px; display: flex; flex-direction: column; justify-content: space-between; }}.active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}.task-text {{ font-weight: 600; font-size: 0.9rem; color: #eee; }}{tags_css}</style>", unsafe_allow_html=True)
 
-    # Grid Display
     grid_html = f'<div class="grid-container" style="grid-template-columns: repeat({st.session_state.grid_size}, 1fr);">'
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
@@ -145,7 +120,6 @@ else:
         grid_html += f'<div class="grid-item {active}"><div style="color:#555;font-size:0.7rem;text-align:left;">#{i:02}</div><div style="font-size:1.5rem;">{item["icon"]}</div><div class="task-text">{item["task"]}</div><div style="min-height:35px;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
-    # Sidebar Controls
     with st.sidebar:
         st.markdown(f"### 🎙️ Match Center")
         with st.container(border=True):
