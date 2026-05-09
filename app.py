@@ -156,7 +156,6 @@ else:
         .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
         .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
         .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
-        /* Sidebar spacing reduction */
         [data-testid="stSidebar"] {{ padding-top: 1rem; }}
         .stButton button {{ margin-bottom: -10px; }}
         </style>
@@ -182,16 +181,17 @@ else:
                 st.session_state.rolled = True
                 st.rerun()
         else:
-            st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:0px;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
+            # Added dice emoji here
+            st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:0px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
             
-            # --- TIGHT TASK BOX ---
             current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
             task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
             
             with st.container(border=True):
-                st.markdown(f"<p style='text-align:center; color:#aaa; font-size:0.85rem; margin-bottom:-5px;'>Provide <b>{st.session_state.current_roll}</b> answers for:</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align:center; color:#aaa; font-size:0.85rem; margin-bottom:-5px; margin-top:5px;'>Provide <b>{st.session_state.current_roll}</b> answers for:</p>", unsafe_allow_html=True)
                 st.markdown(format_header_icons(current_assets, size_logos="28px", size_emojis="24px"), unsafe_allow_html=True)
-                st.markdown(f"<div style='text-align:center; font-size:1rem; font-style:italic; font-weight:600; padding: 5px; color:#fff; line-height:1.2;'>{task_text}</div>", unsafe_allow_html=True)
+                # Added padding-bottom to match the top spacing
+                st.markdown(f"<div style='text-align:center; font-size:1rem; font-style:italic; font-weight:600; padding: 5px 10px 15px 10px; color:#fff; line-height:1.2;'>{task_text}</div>", unsafe_allow_html=True)
 
             st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
