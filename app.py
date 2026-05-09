@@ -39,13 +39,15 @@ COMPETITION_GEOGRAPHY = {
     "La Liga": "es", "Serie A": "it", "Bundesliga": "de", "Ligue 1": "fr"
 }
 
-# Regional Groups for Smart Mapping logic
+# Verified Historical Winners for Smart Mapping
+TROPHY_WINNERS = {
+    "Euros": ["French", "Spanish", "Portuguese", "German", "Italian", "Dutch", "Danish"],
+    "Copa America": ["Argentinian", "Brazilian", "Uruguayan", "Colombian"],
+    "World Cup": ["French", "Spanish", "German", "Italian", "Argentinian", "Brazilian", "English", "Uruguayan"]
+}
+
+EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "pt", "nl", "be", "de", "it", "hr", "ch", "dk", "tr", "at", "ua", "gb-sct", "se", "gb-wls", "pl", "no"]]
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
-EUROPEANS = [
-    "French", "Spanish", "English", "Portuguese", "Dutch", "Belgian", "German", 
-    "Italian", "Croatian", "Swiss", "Danish", "Turkish", "Austrian", "Ukrainian", 
-    "Scottish", "Swedish", "Welsh", "Polish", "Norwegian"
-]
 
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
@@ -53,17 +55,14 @@ def get_assets(text):
     
     for comp, geo in COMPETITION_GEOGRAPHY.items():
         if comp.lower() in text.lower():
-            if "🏆" not in assets["emojis"]:
-                assets["emojis"].append("🏆")
+            if "🏆" not in assets["emojis"]: assets["emojis"].append("🏆")
             if geo == "world":
-                if "🌍" not in assets["emojis"]:
-                    assets["emojis"].append("🌍")
+                if "🌍" not in assets["emojis"]: assets["emojis"].append("🌍")
             else:
                 assets["flags"].append(f"https://flagcdn.com/w40/{geo}.png")
             break
 
-    if "stadium" in text.lower():
-        assets["emojis"].append("🏟️")
+    if "stadium" in text.lower(): assets["emojis"].append("🏟️")
         
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
@@ -110,51 +109,63 @@ def generate_random_task():
     all_nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     manager_clubs = ['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan']
-    
-    euro_only = ["Euros"]
-    sa_only = ["Copa America"]
     global_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
+    
+    template_type = random.randint(1, 9)
+    
+    if template_type == 1: # Both Clubs
+        pair = random.sample(clubs_list, 2)
+        return f"Name a player who played for both {pair[0]} & {pair[1]}"
+    
+    elif template_type == 2: # Nationality + Club
+        n = random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])
+        return f"Name a {n} player who played for {random.choice(clubs_list)}"
+    
+    elif template_type == 3: # Manager
+        return f"Name a manager who managed {random.choice(manager_clubs)}"
+    
+    elif template_type == 4: # Stadium
+        return f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}"
+    
+    elif template_type == 5: # Kit
+        return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
+    
+    elif template_type == 6: # Team Winner
+        comp = random.choice(global_comps + ["Euros", "Copa America"])
+        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
+        return f"Name a team that has won {comp_display}"
 
-    picker = random.random()
-    if picker < 0.25: # European Specific
-        nation = random.choice(EUROPEANS)
-        comp = random.choice(euro_only + global_comps)
-    elif picker < 0.45: # South American Specific
-        nation = random.choice(SOUTH_AMERICANS)
-        comp = random.choice(sa_only + global_comps)
-    else: # Global
+    elif template_type == 7: # Broad Player Winner
+        comp = random.choice(global_comps + ["Euros", "Copa America"])
+        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
+        return f"Name a player who has won {comp_display}"
+
+    elif template_type == 8: # SMART MAPPED: Nation + Winner (Historical Only)
+        comp = random.choice(["Euros", "Copa America", "World Cup", "Champions League", "Europa League"])
+        if comp in TROPHY_WINNERS:
+            valid_nation = random.choice(TROPHY_WINNERS[comp])
+        else:
+            valid_nation = random.choice(EUROPEANS + SOUTH_AMERICANS)
+        article = "an" if valid_nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
+        return f"Name {article} {valid_nation} player who has won the {comp}"
+
+    else: # Played In
         nation = random.choice(all_nations)
-        comp = random.choice(global_comps)
-    
-    article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-    pair = random.sample(clubs_list, 2)
-    comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
-    
-    templates = [
-        lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
-        lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
-        lambda: f"Name {article} {nation} player who has played in {comp_display}",
-        lambda: f"Name a manager who managed {random.choice(manager_clubs)}",
-        lambda: f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}",
-        lambda: f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}",
-        lambda: f"Name a player who has won {comp_display}",
-        lambda: f"Name a team that has won {comp_display}"
-    ]
-    return random.choice(templates)()
+        comp = random.choice(global_comps + ["Euros", "Copa America"])
+        article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
+        comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
+        return f"Name {article} {nation} player who has played in {comp_display}"
 
 # --- 4. STATE MANAGEMENT & GAME ENGINE ---
 def reset_all_data():
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+    for key in list(st.session_state.keys()): del st.session_state[key]
     st.rerun()
 
 if 'game_started' not in st.session_state:
     st.session_state.update({
-        'game_started': False, 'grid_size': 4,
-        'num_players': 2, 'player_names': [], 'player_data': {},
-        'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False, 'winner': None,
-        'active_final_task': None
+        'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
+        'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 
+        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None
     })
 
 def start_game():
@@ -229,26 +240,18 @@ else:
                 if player['pos'] == len(st.session_state.grid_map)-1:
                     t = generate_random_task()
                     st.session_state.active_final_task = {"text": t, "assets": get_assets(t)}
-                st.session_state.rolled = True
-                st.rerun()
+                st.session_state.rolled = True; st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            
             current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
             task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
-            word_choice = "answer" if st.session_state.current_roll == 1 else "answers"
-
             with st.container(border=True):
-                st.markdown(f"<div style='text-align:center; color:#aaa; font-size:0.9rem; margin-top:8px;'>Provide <b>{st.session_state.current_roll}</b> {word_choice} for:</div>", unsafe_allow_html=True)
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
                 st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{task_text}</div>", unsafe_allow_html=True)
-
-            st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
-                if player['pos'] == len(st.session_state.grid_map) - 1:
-                    st.session_state.winner = player
-                else:
+                if player['pos'] == len(st.session_state.grid_map) - 1: st.session_state.winner = player
+                else: 
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                 st.rerun()
@@ -257,3 +260,12 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
+
+        st.markdown("---")
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Game", use_container_width=True):
+                st.session_state.confirm_reset = True; st.rerun()
+        else:
+            st.warning("Confirm Reset?")
+            if st.button("Confirm Reset", type="primary"): reset_all_data()
+            if st.button("Cancel"): st.session_state.confirm_reset = False; st.rerun()
