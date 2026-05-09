@@ -3,8 +3,8 @@ import random
 import time
 import re
 
-# --- 1. COMPREHENSIVE FLAG IMAGE MAPPING ---
-# Maps keywords and adjectives to ISO codes for FlagCDN
+# --- 1. FLAG IMAGE MAPPING ---
+# Comprehensive ISO mapping for FlagCDN
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
@@ -13,64 +13,56 @@ COUNTRY_DATA = {
     "Belgian": "be", "Belgium": "be", "Turkish": "tr", "Turkey": "tr",
     "Scottish": "gb-sct", "Scotland": "gb-sct", "Welsh": "gb-wls", "Wales": "gb-wls",
     "Brazilian": "br", "Brazil": "br", "Argentinian": "ar", "Argentina": "ar",
-    "Uruguayan": "uy", "Uruguay": "uy", "Egyptian": "eg", "Egypt": "eg",
-    "Senegalese": "sn", "Senegal": "sn", "Moroccan": "ma", "Morocco": "ma",
-    "Nigerian": "ng", "Nigeria": "ng", "Japanese": "jp", "Japan": "jp",
-    "Mexican": "mx", "Mexico": "mx", "Colombian": "co", "Colombia": "co",
-    "American": "us", "USA": "us", "Ivorian": "ci", "Ivory Coast": "ci",
-    "Ghanaian": "gh", "Ghana": "gh", "Cameroonian": "cm", "Cameroon": "cm",
-    "Algerian": "dz", "Algeria": "dz", "Swiss": "ch", "Switzerland": "ch",
-    "Danish": "dk", "Denmark": "dk", "Swedish": "se", "Sweden": "se",
-    "Polish": "pl", "Poland": "pl", "Norwegian": "no", "Norway": "no",
-    "Chilean": "cl", "Chile": "cl", "South Korean": "kr", "Korea": "kr",
-    "Australian": "au", "Australia": "au", "Greek": "gr", "Greece": "gr",
-    "Ukrainian": "ua", "Ukraine": "ua", "Austrian": "at", "Austria": "at"
+    "Uruguayan": "uy", "Uruguay": "uy", "Egyptian": "eg", "Senegalese": "sn", 
+    "Moroccan": "ma", "Nigerian": "ng", "Japanese": "jp", "Mexican": "mx", 
+    "Colombian": "co", "American": "us", "Ivorian": "ci", "Ghanaian": "gh"
 }
 
-def clean_and_get_flag(item):
-    """
-    1. Removes existing emoji characters/codes from the task text.
-    2. Returns the clean text and a flag URL if a country is found.
-    """
-    text = item["task"]
-    # Regex to remove common emoji patterns/placeholders that might show as "AR" or "CI"
-    text = re.sub(r'[^\x00-\x7F]+', '', text).strip() 
+def clean_text_and_add_flag(text):
+    """Removes broken emoji text codes and appends a clean flag image."""
+    # Remove non-ASCII characters (like the broken AR/CI emoji codes)
+    clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
-    flag_url = None
+    flag_html = ""
     for word, iso in COUNTRY_DATA.items():
-        if word.lower() in text.lower():
-            flag_url = f"https://flagcdn.com/w80/{iso}.png"
+        if word.lower() in clean_text.lower():
+            flag_url = f"https://flagcdn.com/w40/{iso}.png"
+            flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    return text, flag_url
+    return f"{clean_text}{flag_html}"
 
 # --- 2. CRITERIA POOL ---
+# All icons removed - will use default football emoji
 CRITERIA_POOL = [
-    {"task": "Played for both Barcelona & Inter", "icon": "🔵🔴"},
-    {"task": "Name a Spanish Stadium", "icon": "🏟️"},
-    {"task": "Croatians to win the UCL", "icon": "🥇"},
-    {"task": "Teams with 3+ English 2nd Div Titles", "icon": "🏆"},
-    {"task": "Brazilians to play for Man City", "icon": "⚽"},
-    {"task": "Teams currently in the Liga Portugal", "icon": "🇵🇹"},
-    {"task": "Played for both AC Milan & Chelsea", "icon": "🤝"},
-    {"task": "African players to play for PSG", "icon": "🌍"},
-    {"task": "Man Utd players to win a World Cup", "icon": "👹"},
-    {"task": "Uruguayans to score in a World Cup", "icon": "🇺🇾"},
-    {"task": "Players in France's 2018 WC Squad", "icon": "🇫🇷"},
-    {"task": "German players to win a Golden Boot", "icon": "👟"},
-    {"task": "Dutch players to play for Man Utd", "icon": "🇳🇱"},
-    {"task": "Italian clubs to play in the UCL", "icon": "🇮🇹"},
-    {"task": "Argentinian scorers in the PL", "icon": "🇦🇷"},
-    {"task": "Belgian players to win the UCL", "icon": "🇧🇪"},
-    {"task": "Portuguese players to play for Wolves", "icon": "🐺"},
-    {"task": "Turkish clubs in the Super Lig", "icon": "🇹🇷"},
-    {"task": "Scottish players to play in the PL", "icon": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
-    {"task": "Japanese players in the Bundesliga", "icon": "🇯🇵"},
-    {"task": "Ivorian legends in the Premier League", "icon": "🇨🇮"},
-    {"task": "Greek clubs in European competition", "icon": "🏛️"},
-    {"task": "Mexican players to play in La Liga", "icon": "🌮"},
-    {"task": "Swedish players to play for AC Milan", "icon": "🇸🇪"},
-    {"task": "American players in the Premier League", "icon": "🦅"}
+    "Played for both Barcelona & Inter",
+    "Name a Spanish Stadium",
+    "Croatians to win the UCL",
+    "Teams with 3+ English 2nd Div Titles",
+    "Brazilians to play for Man City",
+    "Teams currently in the Liga Portugal",
+    "Played for both AC Milan & Chelsea",
+    "African players to play for PSG",
+    "Man Utd players to win a World Cup",
+    "Uruguayans to score in a World Cup",
+    "Players in France's 2018 WC Squad",
+    "German players to win a Golden Boot",
+    "Dutch players to play for Man Utd",
+    "Italian clubs to play in the UCL",
+    "Argentinian scorers in the PL",
+    "Belgian players to win the UCL",
+    "Portuguese players to play for Wolves",
+    "Turkish clubs in the Super Lig",
+    "Scottish players to play in the PL",
+    "Japanese players in the Bundesliga",
+    "Ivorian legends in the Premier League",
+    "Mexican players to play in La Liga",
+    "American players in the Premier League",
+    "German clubs to win a European Trophy",
+    "Played for both Real Madrid & Liverpool",
+    "Managers who have won the Premier League",
+    "Players with 50+ Brazil caps",
+    "French players to play for Arsenal"
 ]
 
 # --- 3. STATE MANAGEMENT ---
@@ -84,19 +76,14 @@ if 'game_started' not in st.session_state:
 
 def start_game():
     total_sq = st.session_state.grid_size ** 2
-    board = [{"task": "KICK OFF", "icon_url": None, "icon_emoji": "🏁"}]
+    board = [{"task": "KICK OFF"}]
     
     selected_tasks = random.sample(CRITERIA_POOL, min(len(CRITERIA_POOL), total_sq - 2))
-    
-    for item in selected_tasks:
-        clean_text, flag_url = clean_and_get_flag(item)
-        board.append({
-            "task": clean_text,
-            "icon_url": flag_url,
-            "icon_emoji": item["icon"] if not flag_url else None
-        })
+    for task in selected_tasks:
+        board.append({"task": clean_text_and_add_flag(task)})
         
-    board.append({"task": "FINAL WHISTLE", "icon_url": None, "icon_emoji": "🏆"})
+    board.append({"task": "FINAL WHISTLE"})
+    
     st.session_state.grid_map = board
     st.session_state.player_data = {
         i: {
@@ -131,11 +118,10 @@ else:
     st.markdown(f"""
         <style>
         .grid-container {{ display: grid; gap: 10px; }}
-        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
+        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
         .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
         .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
-        .flag-img {{ height: 35px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #444; }}
-        .icon-emoji {{ font-size: 2rem; margin-bottom: 5px; }}
+        .icon-emoji {{ font-size: 1.8rem; margin-bottom: 5px; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -144,16 +130,12 @@ else:
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
         
-        # Determine if we show a flag image or an emoji icon
-        if item.get("icon_url"):
-            icon_html = f'<img src="{item["icon_url"]}" class="flag-img">'
-        else:
-            icon_html = f'<div class="icon-emoji">{item.get("icon_emoji", "⚽")}</div>'
+        icon = "⚽" if i != 0 and i != len(st.session_state.grid_map)-1 else "🏁" if i == 0 else "🏆"
 
         grid_html += f'''
             <div class="grid-item {active}">
                 <div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>
-                {icon_html}
+                <div class="icon-emoji">{icon}</div>
                 <div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div>
                 <div style="min-height:30px; display:flex; justify-content:center; align-items:center;">{marks}</div>
             </div>'''
@@ -169,13 +151,13 @@ else:
                 st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            st.markdown(f"<p style='text-align:center;'><b>Task:</b> {st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
-            if c1.button("✅ Yes", use_container_width=True):
+            if c1.button("✅ Success", use_container_width=True):
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
-            if c2.button("❌ No", use_container_width=True):
+            if c2.button("❌ Fail", use_container_width=True):
                 player['pos'] = player['prev']
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
@@ -196,7 +178,3 @@ else:
             if rn.button("No", use_container_width=True):
                 st.session_state.confirm_reset = False
                 st.rerun()
-
-    if player['pos'] == len(st.session_state.grid_map) - 1 and not st.session_state.rolled:
-        st.balloons()
-        st.success(f"🏆 {player['name']} Wins!")
