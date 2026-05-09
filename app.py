@@ -184,8 +184,6 @@ def start_game():
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     unique_tasks = set()
     
-    # Validation check: Ensure enough unique tasks can be generated
-    # (Safety break at 2000 attempts to prevent hanging)
     attempts = 0
     while len(unique_tasks) < (total_sq - 2) and attempts < 2000:
         new_task = generate_random_task(st.session_state.selected_categories)
@@ -199,7 +197,7 @@ def start_game():
 
     for task_text in list(unique_tasks):
         board.append({"task": task_text, "assets": get_assets(task_text)})
-    board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🏆"]}})
+    board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🥇"]}})
     st.session_state.grid_map = board
     st.session_state.player_data = {
         i: {
@@ -221,25 +219,22 @@ if st.session_state.winner:
     if st.button("🏟️ Return to Menu", use_container_width=True): reset_all_data()
 
 elif not st.session_state.game_started:
-    st.title("⚽ Football Path Setup")
+    st.title("⚽ Football Grid Setup")
     with st.container(border=True):
         c1, c2 = st.columns(2)
         st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
         
-        # Use key to prevent bug where categories add themselves back
+        # Default all selected by providing the full list as the default
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
+            default=["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"],
             key="cat_filter")
         
-        # Validation Logic for the Blocker
         required_tasks = (st.session_state.grid_size ** 2) - 2
         if not st.session_state.selected_categories:
             st.error("Please select at least one category to generate questions.")
             can_start = False
-        elif len(st.session_state.selected_categories) < 2 and st.session_state.grid_size > 4:
-            st.warning(f"Low category count for {st.session_state.grid_size}x{st.session_state.grid_size} grid. Generation might fail.")
-            can_start = True
         else:
             can_start = True
 
