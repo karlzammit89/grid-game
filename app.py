@@ -61,8 +61,10 @@ def grid_text_formatter(text):
     text = re.sub(r"Name a team", "Teams", text)
     text = re.sub(r"Name a stadium", "Stadiums", text)
     text = re.sub(r"Name a manager", "Managers", text)
-    text = text.replace("players who has", "players who have").replace("Players who has", "Players who have")
-    text = text.replace("teams that has", "teams that have").replace("Teams that has", "Teams that have")
+    text = text.replace("players who has", "players who have")
+    text = text.replace("Players who has", "Players who have")
+    text = text.replace("teams that has", "teams that have")
+    text = text.replace("Teams that has", "Teams that have")
     return text
 
 def smart_pluralize(text, count):
@@ -91,10 +93,14 @@ def get_assets(text):
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    for e in list(dict.fromkeys(assets["emojis"])): html += f'<span style="font-size:{size_emojis};">{e}</span>'
-    for f in assets["flags"]: html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
-    for l in assets["logos"]: html += f'<img src="{l}" style="height:{size_logos};">'
-    if not any(assets.values()): return html + f'<span style="font-size:{size_emojis};">⚽</span></div>'
+    for e in list(dict.fromkeys(assets["emojis"])):
+        html += f'<span style="font-size:{size_emojis};">{e}</span>'
+    for f in assets["flags"]:
+        html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
+    for l in assets["logos"]:
+        html += f'<img src="{l}" style="height:{size_logos};">'
+    if not any(assets.values()):
+        return html + f'<span style="font-size:{size_emojis};">⚽</span></div>'
     return html + '</div>'
 
 # --- 4. DYNAMIC LOGIC ---
@@ -124,7 +130,7 @@ if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'num_players': 2, 'player_names': [], 
         'player_data': {}, 'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False, 'winner': None,
+        'grid_map': [], 'confirm_reset': False, 'winner': None, 'active_final_task': None,
         'selected_categories': ["Club Connections", "Trophies", "Stadiums", "Kits"]
     })
 
@@ -151,7 +157,7 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"<div style='text-align:center; padding:100px;'><h1>🥇</h1><h2>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; padding:100px;'><h1 style='font-size:5rem;'>🥇</h1><h2 style='color:{st.session_state.winner['color']};'>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
     if st.button("🏟️ Return to Menu", use_container_width=True): reset_all_data()
 
 elif not st.session_state.game_started:
@@ -183,7 +189,7 @@ else:
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
-        st.markdown(f"<h3 style='text-align:center; color:{player['color']};'>{player['name']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align:center; color:{player['color']}; margin-top: -30px; margin-bottom: 10px;'>{player['name']}</h3>", unsafe_allow_html=True)
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
@@ -205,7 +211,7 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
-
+            
             # --- ANSWERS DROPDOWN BELOW BUTTONS ---
             if "both" in task.lower():
                 match = re.search(r"both (.*?) & (.*)", task)
@@ -214,7 +220,7 @@ else:
                     ans_list = fetch_shared_players(c1_name, c2_name)
                     with st.expander(f"👁️ Possible Answers ({len(ans_list)})"):
                         if ans_list: st.write(", ".join(ans_list))
-                        else: st.write("No players found in database.")
+                        else: st.write("Searching database...")
 
         st.markdown("---")
         if st.button("🚩 End Game", use_container_width=True): reset_all_data()
