@@ -32,11 +32,10 @@ ESPN_LOGOS = {
     "Atletico Madrid": "1068", "Sevilla": "243", "Villarreal": "102", "AC Milan": "103", 
     "Juventus": "111", "Inter Milan": "110", "AS Roma": "104", "Napoli": "114", 
     "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", "PSG": "160", 
-    "Marseille": "176", "Monaco": "174", "Ajax": "139", "PSV Eindhoven": "148", 
-    "PSV": "148", "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
+    "Marseille": "176", "Monaco": "174", 
+    "Ajax": "139", "PSV Eindhoven": "148", "PSV": "148", "Feyenoord": "142", 
+    "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
-
-VALID_CLUB_PAIRS = list(ESPN_LOGOS.keys())
 
 def get_club_logo_html(text):
     html = ""
@@ -64,21 +63,17 @@ def clean_text_and_add_assets(text):
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
-    # Grammar Check: use 'an' if nation starts with a vowel
     nation = random.choice(list(COUNTRY_DATA.keys()))
     article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
-    
-    # Unique Club Selection logic
     clubs = random.sample(list(ESPN_LOGOS.keys()), 2)
-    club_a, club_b = clubs[0], clubs[1]
-
+    
     templates = [
-        lambda: f"Name a player who played for both {club_a} & {club_b}",
+        lambda: f"Name a player who played for both {clubs[0]} & {clubs[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Turkish'])} player who played for {random.choice(list(ESPN_LOGOS.keys()))}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
         lambda: f"Name a manager who coached {random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan'])}"
     ]
-    return clean_text_and_add_assets(random.choice(templates)())
+    return random.choice(templates)()
 
 # --- 3. UI ENGINE & STATE ---
 def reset_all_data():
@@ -98,8 +93,19 @@ if 'game_started' not in st.session_state:
 def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
-    for _ in range(total_sq - 2):
-        board.append({"task": generate_random_task()})
+    
+    # GUARANTEE UNIQUENESS
+    unique_tasks = set()
+    required_tasks = total_sq - 2
+    
+    while len(unique_tasks) < required_tasks:
+        new_task = generate_random_task()
+        unique_tasks.add(new_task)
+    
+    # Add unique tasks to board with assets
+    for task_text in list(unique_tasks):
+        board.append({"task": clean_text_and_add_assets(task_text)})
+        
     board.append({"task": "FINAL WHISTLE"})
     st.session_state.grid_map = board
     st.session_state.player_data = {
@@ -162,7 +168,7 @@ else:
                 st.session_state.current_roll = random.randint(1, 3)
                 player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 if player['pos'] == last_sq_index:
-                    st.session_state.active_final_task = generate_random_task()
+                    st.session_state.active_final_task = clean_text_and_add_assets(generate_random_task())
                 st.session_state.rolled = True
                 st.rerun()
         else:
