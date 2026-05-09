@@ -48,16 +48,39 @@ TROPHY_WINNERS = {
 EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "pt", "nl", "be", "de", "it", "hr", "ch", "dk", "tr", "at", "ua", "gb-sct", "se", "gb-wls", "pl", "no"]]
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
-# --- 2. GRAMMAR & ASSET ENGINES ---
+# --- 2. GRAMMAR, ASSET & ANSWER ENGINES ---
+
+def get_correct_answers(text):
+    """
+    Simulates a database lookup for correct answers. 
+    In a production app, this would query an API or SQL database.
+    """
+    text_lower = text.lower()
+    
+    # Mock data for demonstration
+    if "stadium" in text_lower and "england" in text_lower:
+        return ["Old Trafford", "Anfield", "Emirates Stadium", "Stamford Bridge", "Etihad Stadium", "Villa Park"]
+    if "played for both man utd & real madrid" in text_lower:
+        return ["Cristiano Ronaldo", "David Beckham", "Ruud van Nistelrooy", "Gabriel Heinze", "Angel Di Maria", "Casemiro", "Raphael Varane"]
+    if "brazilian player" in text_lower and "real madrid" in text_lower:
+        return ["Vinícius Júnior", "Rodrygo", "Éder Militão", "Casemiro", "Marcelo", "Ronaldo Nazário", "Roberto Carlos", "Kaká"]
+    if "won the champions league" in text_lower and "team" in text_lower:
+        return ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Man Utd", "Inter Milan", "Chelsea", "Man City"]
+    if "kit color is red" in text_lower:
+        return ["Liverpool", "Arsenal", "Man Utd", "Bayern Munich", "AC Milan", "Benfica", "Ajax"]
+    if "200+ goals" in text_lower:
+        return ["Cristiano Ronaldo", "Lionel Messi", "Robert Lewandowski", "Harry Kane", "Karim Benzema", "Luis Suarez"]
+    
+    # Generic fallback if specific mock data isn't matched
+    return ["Example Answer A", "Example Answer B", "Example Answer C", "Example Answer D"]
+
 def grid_text_formatter(text):
-    # Pluralize kit colors specifically
     text = text.replace("Name a football team whose", "Football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
     text = re.sub(r"Name a player", "Players", text)
     text = re.sub(r"Name a team", "Teams", text)
     text = re.sub(r"Name a stadium", "Stadiums", text)
     text = re.sub(r"Name a manager", "Managers", text)
-    # Correcting grammar for plural grid labels
     text = text.replace("players who has", "players who have")
     text = text.replace("Players who has", "Players who have")
     text = text.replace("teams that has", "teams that have")
@@ -73,7 +96,6 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
-    # Correcting grammar for plural counts in sidebar
     text = text.replace("players who has", "players who have")
     text = text.replace("teams that has", "teams that have")
     return text
@@ -291,6 +313,13 @@ else:
             with st.container(border=True):
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
                 st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{display_text}</div>", unsafe_allow_html=True)
+            
+            # --- NEW: ANSWERS DROPDOWN SECTION ---
+            if player['pos'] > 0: # Only show for task squares
+                correct_list = get_correct_answers(task_text)
+                with st.expander(f"👁️ Show Solutions ({len(correct_list)} correct answers)"):
+                    for ans in correct_list:
+                        st.write(f"- {ans}")
             
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
