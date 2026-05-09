@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 
-# --- 1. DATA MAPPING (Flags & Hunter.io Domains) ---
+# --- 1. DATA MAPPING (Flags & Hunter.io 2026 Domains) ---
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
@@ -11,7 +11,7 @@ COUNTRY_DATA = {
     "Argentinian": "ar", "Argentina": "ar"
 }
 
-# Mapping names to official domains for Hunter.io API
+# Domain mapping for Hunter.io Logo API
 CLUB_DOMAINS = {
     "Real Madrid": "realmadrid.com", "Barcelona": "fcbarcelona.com",
     "Man Utd": "manutd.com", "Manchester United": "manutd.com",
@@ -22,17 +22,17 @@ CLUB_DOMAINS = {
 }
 
 def get_club_logo(text):
-    """Fetches badges via Hunter.io (Zero-authentication API)."""
+    """Fetches badges via Hunter.io 2026 direct endpoint."""
     logo_html = ""
     for club, domain in CLUB_DOMAINS.items():
         if club.lower() in text.lower():
-            # Hunter.io endpoint: no API key required
-            url = f"https://hunter.io/api/logo/{domain}"
-            logo_html += f'<img src="{url}" style="height:22px; vertical-align:middle; margin-right:6px;">'
+            # Correct 2026 Hunter.io URL format: logos.hunter.io/{domain}
+            url = f"https://logos.hunter.io/{domain}"
+            logo_html += f'<img src="{url}" style="height:24px; vertical-align:middle; margin-right:8px;">'
     return logo_html
 
 def clean_text_and_add_assets(text):
-    """Preserves your UI while adding working flags and Hunter.io logos."""
+    """Adds assets using the fixed Hunter.io 2026 endpoint."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
     # Flags logic
@@ -43,9 +43,7 @@ def clean_text_and_add_assets(text):
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    # Club Logo logic (Hunter.io Fix)
     logo_html = get_club_logo(clean_text)
-    
     return f"{logo_html}{clean_text}{flag_html}"
 
 # --- 2. LOGIC GENERATORS ---
@@ -95,9 +93,10 @@ if 'game_started' not in st.session_state:
     })
 
 def start_game():
+    # Square the grid size (4x4 = 16, 5x5 = 25)
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
-    selected_tasks = random.sample(CRITERIA_POOL, min(len(CRITERIA_POOL), total_sq - 2))
+    selected_tasks = random.sample(CRITERIA_POOL * 3, total_sq - 2) # Multiply pool to ensure enough tasks
     for task in selected_tasks:
         board.append({"task": clean_text_and_add_assets(task)})
     board.append({"task": "FINAL WHISTLE"})
@@ -112,7 +111,7 @@ def start_game():
     }
     st.session_state.game_started = True
 
-# --- 4. ORIGINAL UI LAYOUT ---
+# --- 4. UI LAYOUT ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
@@ -125,7 +124,7 @@ elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
         c1, c2 = st.columns(2)
-        st.session_state.grid_size = c1.number_input("Grid Size (e.g. 4 for 16 squares)", 3, 6, 4)
+        st.session_state.grid_size = c1.number_input("Grid Size (4 = 4x4, 5 = 5x5)", 3, 6, 4)
         st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
@@ -135,9 +134,14 @@ elif not st.session_state.game_started:
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
+    # DYNAMIC GRID CSS: Uses the grid_size to set columns
     st.markdown(f"""
         <style>
-        .grid-container {{ display: grid; gap: 10px; }}
+        .grid-container {{ 
+            display: grid; 
+            gap: 12px; 
+            grid-template-columns: repeat({st.session_state.grid_size}, 1fr); 
+        }}
         .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
         .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
         .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
@@ -145,7 +149,7 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    grid_html = f'<div class="grid-container" style="grid-template-columns: repeat({st.session_state.grid_size}, 1fr);">'
+    grid_html = '<div class="grid-container">'
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
