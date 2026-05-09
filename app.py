@@ -3,7 +3,6 @@ import random
 import re
 
 # --- 1. SMART DATA MAPPING ---
-# Consolidated to primary names to prevent "Tottenham/Spurs" type duplicates
 COUNTRY_DATA = {
     "French": "fr", "Spanish": "es", "English": "gb-eng", "Portuguese": "pt",
     "Dutch": "nl", "Belgian": "be", "German": "de", "Italian": "it",
@@ -16,7 +15,6 @@ COUNTRY_DATA = {
     "Canadian": "ca", "Japanese": "jp", "South Korean": "kr", "Australian": "au"
 }
 
-# Cleaned: One key per ID to ensure the generator treats them as unique entities
 ESPN_LOGOS = {
     "Man Utd": "360", "Liverpool": "364", "Arsenal": "359", 
     "Chelsea": "363", "Man City": "382", "Tottenham": "367",
@@ -54,9 +52,9 @@ def clean_text_and_add_assets(text):
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
-    # Use list for random selection
     nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
+    manager_clubs = ['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan']
     
     nation = random.choice(nations)
     article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
@@ -66,7 +64,7 @@ def generate_random_task():
         lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
-        lambda: f"Name a manager who coached {random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan'])}"
+        lambda: f"Name a manager who managed {random.choice(manager_clubs)}"
     ]
     return random.choice(templates)()
 
@@ -92,11 +90,10 @@ def start_game():
     unique_tasks = set()
     required_tasks = total_sq - 2
     
-    # Safety counter to prevent infinite loops
     attempts = 0
     while len(unique_tasks) < required_tasks and attempts < 1000:
         new_task = generate_random_task()
-        # Sort club names in 'both' tasks so "A & B" is same as "B & A"
+        # Sort club names in 'both' tasks to prevent "A & B" and "B & A" duplicates
         if "both" in new_task:
             parts = new_task.split("both ")[1].split(" & ")
             new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
