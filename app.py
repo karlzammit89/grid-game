@@ -61,35 +61,50 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 # --- 2. ENGINES ---
 @st.cache_data(show_spinner=False)
 def get_answer_logic(task_text):
-    """The central engine to find answers based on live data or static fallbacks."""
     t_lower = task_text.lower()
     
-    # 1. CLUB CONNECTIONS (Uses your existing FBRef Scraper)
+    # --- 1. CLUB CONNECTIONS (Scraper) ---
     if "both" in t_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
             shared = fetch_shared_players(c1, c2) 
-            return f"**Common Players:** {', '.join(shared[:15])}" if shared else "No quick lookup data found."
+            return f"**Common Players:** {', '.join(shared[:15])}" if shared else "No connection data found."
 
-    # 2. STADIUMS (Uses your STADIUM_COUNTRIES mapping)
+    # --- 2. TROPHIES (The part you wanted fixed) ---
+    TROPHY_DATA = {
+        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Man City"],
+        "premier league": ["Man Utd", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester City"],
+        "world cup": ["Argentina", "France", "Germany", "Brazil", "Italy", "Spain", "England"],
+        "euros": ["Italy", "Portugal", "Spain", "Greece", "France", "Germany", "Netherlands"],
+        "fa cup": ["Arsenal", "Man Utd", "Chelsea", "Liverpool", "Tottenham", "Man City"],
+        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla"],
+        "serie a": ["Juventus", "Inter Milan", "AC Milan", "Napoli", "AS Roma"],
+        "bundesliga": ["Bayern Munich", "Dortmund", "Leverkusen", "Leipzig", "Stuttgart"]
+    }
+
+    if "won" in t_lower or "winner" in t_lower:
+        for trophy, winners in TROPHY_DATA.items():
+            if trophy in t_lower:
+                return f"**Previous Winners:** {', '.join(winners)}"
+
+    # --- 3. STADIUMS ---
     if "stadium" in t_lower:
+        # Check against your STADIUM_COUNTRIES keys
         for country in STADIUM_COUNTRIES.keys():
             if country.lower() in t_lower:
-                # Fallback list for common stadiums
-                return f"**Stadiums in {country}:** Wembley, Old Trafford, Anfield, Etihad, Emirates."
+                stadiums = ["Wembley", "Old Trafford", "Anfield", "Etihad", "Emirates"] if country == "England" else ["Bernabeu", "Camp Nou", "Metropolitano"]
+                return f"**Stadiums in {country}:** {', '.join(stadiums)}"
 
-    # 3. KITS (Uses your KIT_COLOR_MAP)
+    # --- 4. KITS ---
     if "kit color" in t_lower:
         for color in KIT_COLOR_MAP.keys():
             if color.lower() in t_lower:
-                return f"**Teams with {color} kits:** Liverpool, Arsenal, Man Utd, Bayern Munich (Examples)."
+                # Add a few logic-based examples
+                teams = ["Liverpool", "Man Utd", "Bayern"] if color == "Red" else ["Chelsea", "Man City", "Napoli"]
+                return f"**Teams with {color} kits:** {', '.join(teams)}"
 
-    # 4. TROPHIES
-    if "won" in t_lower:
-        return "Check the search link below for the full list of winners!"
-
-    return "No instant data. Use the search button below!"
+    return "No instant data found for this specific task."
 
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
