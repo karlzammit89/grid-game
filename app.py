@@ -391,17 +391,18 @@ n = len(all_answers)
 n = len(all_answers)
 
 # --- UPDATED VIEW ANSWERS SIDEBAR ---
-            # Get the raw list of answers
-            all_answers = get_answer_logic(task_text)
-            n = len(all_answers)
-            
-            with st.expander(f"👁️ View Answers ({n})"):
-                if n > 0:
-                    # Renders each answer on its own row with a bullet point
-                    formatted_rows = "\n".join([f"* {item}" for item in all_answers])
-                    st.markdown(formatted_rows)
-                else:
-                    st.write("No answers found in database.")
+            # Get the raw list
+all_answers = get_answer_logic(task_text)
+n = len(all_answers)
+
+# Header displays the count (n)
+with st.expander(f"👁️ View Answers ({n})"):
+    if n > 0:
+        # Join into clean rows with bullet points
+        formatted_rows = "\n".join([f"* {item}" for item in all_answers])
+        st.markdown(formatted_rows)
+    else:
+        st.write("No answers found in database.")
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
