@@ -63,48 +63,61 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 def get_answer_logic(task_text):
     t_lower = task_text.lower()
     
-    # --- 1. CLUB CONNECTIONS (Scraper) ---
+    # --- 1. CLUB CONNECTIONS (Scraper - Already fetches all players) ---
     if "both" in t_lower:
         match = re.search(r"both (.*?) & (.*)", task_text)
         if match:
             c1, c2 = match.group(1).strip(), match.group(2).strip()
             shared = fetch_shared_players(c1, c2) 
-            return f"**Common Players:** {', '.join(shared[:15])}" if shared else "No connection data found."
+            return f"**Players for both clubs:**\n" + ", ".join(shared) if shared else "No connection data found."
 
-    # --- 2. TROPHIES (The part you wanted fixed) ---
+    # --- 2. TROPHIES (Comprehensive Winners) ---
     TROPHY_DATA = {
-        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Man City"],
-        "premier league": ["Man Utd", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester City"],
-        "world cup": ["Argentina", "France", "Germany", "Brazil", "Italy", "Spain", "England"],
-        "euros": ["Italy", "Portugal", "Spain", "Greece", "France", "Germany", "Netherlands"],
-        "fa cup": ["Arsenal", "Man Utd", "Chelsea", "Liverpool", "Tottenham", "Man City"],
-        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla"],
-        "serie a": ["Juventus", "Inter Milan", "AC Milan", "Napoli", "AS Roma"],
-        "bundesliga": ["Bayern Munich", "Dortmund", "Leverkusen", "Leipzig", "Stuttgart"]
+        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Ajax", "Inter Milan", "Man United", "Chelsea", "Juventus", "Benfica", "Nottingham Forest", "Porto", "Celtic", "Hamburg", "Steaua București", "Marseille", "Dortmund", "Feyenoord", "Aston Villa", "PSV Eindhoven", "Red Star Belgrade", "Man City"],
+        "premier league": ["Man United", "Man City", "Chelsea", "Arsenal", "Liverpool", "Leicester City", "Blackburn Rovers"],
+        "world cup": ["Brazil", "Germany", "Italy", "Argentina", "France", "Uruguay", "Spain", "England"],
+        "euros": ["Germany", "Spain", "Italy", "France", "Russia", "Czech Republic", "Portugal", "Netherlands", "Denmark", "Greece"],
+        "fa cup": ["Arsenal", "Man United", "Chelsea", "Liverpool", "Tottenham", "Aston Villa", "Man City", "Newcastle", "Blackburn", "Everton", "West Brom", "Wolverhampton", "Sheffield Utd", "Bolton", "Old Etonians", "Portsmouth", "Sunderland", "Wigan"],
+        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Athletic Bilbao", "Valencia", "Real Sociedad", "Deportivo La Coruña", "Sevilla", "Real Betis"],
+        "serie a": ["Juventus", "Inter Milan", "AC Milan", "Genoa", "Torino", "Bologna", "Pro Vercelli", "AS Roma", "Napoli", "Lazio", "Fiorentina", "Cagliari", "Casale", "Novese", "Sampdoria", "Hellas Verona"],
+        "bundesliga": ["Bayern Munich", "Dortmund", "Mönchengladbach", "Werder Bremen", "Hamburger SV", "Stuttgart", "Köln", "Kaiserslautern", "1860 Munich", "Wolfsburg", "Nürnberg", "Eintracht Braunschweig", "Bayer Leverkusen"]
     }
 
     if "won" in t_lower or "winner" in t_lower:
         for trophy, winners in TROPHY_DATA.items():
             if trophy in t_lower:
-                return f"**Previous Winners:** {', '.join(winners)}"
+                return f"**All Previous Winners:**\n" + ", ".join(winners)
 
-    # --- 3. STADIUMS ---
+    # --- 3. STADIUMS (By Country) ---
+    STADIUM_DATA = {
+        "england": ["Wembley", "Old Trafford", "Anfield", "Emirates", "St James' Park", "Etihad", "Tottenham Hotspur Stadium", "Villa Park", "Stamford Bridge", "Goodison Park", "Elland Road", "Hillsborough"],
+        "spain": ["Santiago Bernabéu", "Camp Nou", "Metropolitano", "Mestalla", "San Mamés", "Ramón Sánchez Pizjuán", "Benito Villamarín", "Reale Arena"],
+        "germany": ["Allianz Arena", "Signal Iduna Park", "Olympiastadion", "Veltins-Arena", "Deutsche Bank Park", "RheinEnergieStadion"],
+        "italy": ["San Siro", "Stadio Olimpico", "Juventus Stadium", "Stadio Diego Armando Maradona", "Stadio Luigi Ferraris", "Stadio Artemio Franchi"],
+        "france": ["Stade de France", "Parc des Princes", "Stade Vélodrome", "Groupama Stadium", "Stade Pierre-Mauroy", "Matmut Atlantique"]
+    }
+
     if "stadium" in t_lower:
-        # Check against your STADIUM_COUNTRIES keys
-        for country in STADIUM_COUNTRIES.keys():
-            if country.lower() in t_lower:
-                stadiums = ["Wembley", "Old Trafford", "Anfield", "Etihad", "Emirates"] if country == "England" else ["Bernabeu", "Camp Nou", "Metropolitano"]
-                return f"**Stadiums in {country}:** {', '.join(stadiums)}"
+        for country, stadiums in STADIUM_DATA.items():
+            if country in t_lower:
+                return f"**Stadiums in {country.title()}:**\n" + ", ".join(stadiums)
 
-    # --- 4. KITS ---
+    # --- 4. KITS (Major Club Examples) ---
+    KIT_DATA = {
+        "red": ["Liverpool", "Man United", "Arsenal", "Bayern Munich", "Benfica", "Ajax", "AC Milan", "Sevilla", "Nottingham Forest", "RB Leipzig"],
+        "blue": ["Chelsea", "Man City", "Everton", "Leicester", "Napoli", "Inter Milan", "PSG", "Porto", "Schalke", "Lazio", "Rangers"],
+        "white": ["Real Madrid", "Tottenham", "Valencia", "Lyon", "Leeds United", "Fulham", "Derby County", "Swansea City"],
+        "yellow": ["Dortmund", "Villarreal", "Watford", "Norwich City", "Fenerbahce", "Cadiz", "Al-Nassr"],
+        "green": ["Celtic", "Sporting CP", "Real Betis", "Sassuolo", "Palmeiras", "Saint-Étienne", "Werder Bremen", "Wolfsburg"],
+        "black": ["Eintracht Frankfurt", "Boavista", "PAOK", "Besiktas"]
+    }
+
     if "kit color" in t_lower:
-        for color in KIT_COLOR_MAP.keys():
-            if color.lower() in t_lower:
-                # Add a few logic-based examples
-                teams = ["Liverpool", "Man Utd", "Bayern"] if color == "Red" else ["Chelsea", "Man City", "Napoli"]
-                return f"**Teams with {color} kits:** {', '.join(teams)}"
+        for color, teams in KIT_DATA.items():
+            if color in t_lower:
+                return f"**Teams with {color.title()} kits:**\n" + ", ".join(teams)
 
-    return "No instant data found for this specific task."
+    return "Answer set not found. Check category data."
 
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
@@ -370,12 +383,12 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- UPDATED ANSWERS SECTION ---
+            # --- ANSWERS SECTION (Buttons Removed) ---
             with st.expander("👁️ View Answers"):
-                # 1. Get the answers from the engine
-                # Note: 'task_text' is already defined in your sidebar logic
+                # Get the comprehensive list of text answers
                 ans_result = get_answer_logic(task_text)
                 st.markdown(ans_result)
+                # Note: All <a> tags and button blocks have been removed from this section.
                 
                 # 2. Keep your original Search link as a backup
                 search_query = task_text.replace("Name a", "").strip()
