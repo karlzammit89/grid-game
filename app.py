@@ -54,9 +54,7 @@ def articulate_task(subject_type, target, action="played for"):
     needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
                  "Europa League", "World Cup", "Euros", "Copa America", 
                  "Ligue 1", "Serie A", "La Liga", "Bundesliga"]
-    
     final_target = f"the {target}" if target in needs_the else target
-    
     if subject_type == "player":
         return f"Name a player who {action} {final_target}"
     return f"Name {article} {subject_type} player who {action} {final_target}"
@@ -64,25 +62,20 @@ def articulate_task(subject_type, target, action="played for"):
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     clean_text = clean_text_via_regex(text).lower()
-    
     if "won" in clean_text: assets["emojis"].append("🏆")
     if "goals" in clean_text: assets["emojis"].append("🥅")
     if "assists" in clean_text: assets["emojis"].append("👟")
     if "clean sheets" in clean_text: assets["emojis"].append("🧤")
     if "bookings" in clean_text: assets["emojis"].append("😵")
-
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-    
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
-        
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -91,12 +84,10 @@ def get_assets(text):
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
-            
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in clean_text:
             assets["emojis"].append(emoji)
             break
-            
     return assets
 
 def clean_text_via_regex(text):
@@ -115,20 +106,19 @@ def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     return html + '</div>'
 
 # --- 3. DYNAMIC LOGIC ---
-def generate_random_task():
+def generate_random_task(categories):
     all_nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
-    enabled = st.session_state.selected_categories
     pool = []
-    if "Club Connections" in enabled: pool.extend([1, 2, 3])
-    if "Stadiums" in enabled: pool.append(4)
-    if "Kits" in enabled: pool.append(5)
-    if "Trophies" in enabled: pool.extend([6, 7, 8, 9])
-    if "N+ Stats" in enabled: pool.extend([10, 11])
+    if "Club Connections" in categories: pool.extend([1, 2, 3])
+    if "Stadiums" in categories: pool.append(4)
+    if "Kits" in categories: pool.append(5)
+    if "Trophies" in categories: pool.extend([6, 7, 8, 9])
+    if "N+ Stats" in categories: pool.extend([10, 11])
     
-    if not pool: return "Select at least one category"
+    if not pool: return "N/A"
     
     template_type = random.choice(pool)
     
@@ -194,13 +184,19 @@ def start_game():
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     unique_tasks = set()
     
-    # Simple limit to prevent infinite loops if pool is too small
+    # Validation check: Ensure enough unique tasks can be generated
+    # (Safety break at 2000 attempts to prevent hanging)
     attempts = 0
-    while len(unique_tasks) < (total_sq - 2) and attempts < 1000:
-        new_task = generate_random_task()
-        unique_tasks.add(new_task)
+    while len(unique_tasks) < (total_sq - 2) and attempts < 2000:
+        new_task = generate_random_task(st.session_state.selected_categories)
+        if new_task != "N/A":
+            unique_tasks.add(new_task)
         attempts += 1
-        
+    
+    if len(unique_tasks) < (total_sq - 2):
+        st.error(f"Error: Could only generate {len(unique_tasks)} unique tasks. Select more categories or reduce grid size.")
+        return False
+
     for task_text in list(unique_tasks):
         board.append({"task": task_text, "assets": get_assets(task_text)})
     board.append({"task": "FINAL WHISTLE", "assets": {"flags":[], "logos":[], "emojis":["🏆"]}})
@@ -214,6 +210,7 @@ def start_game():
         } for i in range(st.session_state.num_players)
     }
     st.session_state.game_started = True
+    return True
 
 # --- 5. UI ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
@@ -229,14 +226,20 @@ elif not st.session_state.game_started:
         c1, c2 = st.columns(2)
         st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
         st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
+        
+        # Use key to prevent bug where categories add themselves back
         st.session_state.selected_categories = st.multiselect("Active Categories", 
             ["Club Connections", "Trophies", "N+ Stats", "Stadiums", "Kits"], 
-            default=st.session_state.selected_categories)
+            key="cat_filter")
         
-        # CATEGORY VALIDATION
+        # Validation Logic for the Blocker
+        required_tasks = (st.session_state.grid_size ** 2) - 2
         if not st.session_state.selected_categories:
             st.error("Please select at least one category to generate questions.")
             can_start = False
+        elif len(st.session_state.selected_categories) < 2 and st.session_state.grid_size > 4:
+            st.warning(f"Low category count for {st.session_state.grid_size}x{st.session_state.grid_size} grid. Generation might fail.")
+            can_start = True
         else:
             can_start = True
 
@@ -244,8 +247,8 @@ elif not st.session_state.game_started:
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
     
     if st.button("🚀 START MATCH", use_container_width=True, type="primary", disabled=not can_start):
-        start_game()
-        st.rerun()
+        if start_game():
+            st.rerun()
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
@@ -274,7 +277,7 @@ else:
                 st.session_state.current_roll = random.randint(1, 3)
                 player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
                 if player['pos'] == len(st.session_state.grid_map)-1:
-                    t = generate_random_task()
+                    t = generate_random_task(st.session_state.selected_categories)
                     st.session_state.active_final_task = {"text": t, "assets": get_assets(t)}
                 st.session_state.rolled = True; st.rerun()
         else:
