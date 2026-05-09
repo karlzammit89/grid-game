@@ -27,35 +27,52 @@ def clean_text_and_add_flag(text):
             break
     return f"{clean_text}{flag_html}"
 
-# --- 2. CRITERIA POOLS ---
+# --- 2. EXPANDED CRITERIA POOL (High Versatility) ---
 CRITERIA_POOL = [
-    "Played for both Barcelona & Inter", "Name a Spanish Stadium", "Croatians to win the UCL",
-    "Teams with 3+ English 2nd Div Titles", "Brazilians to play for Man City", "Teams currently in the Liga Portugal",
-    "Played for both AC Milan & Chelsea", "African players to play for PSG", "Man Utd players to win a World Cup",
-    "Uruguayans to score in a World Cup", "Players in France's 2018 WC Squad", "German players to win a Golden Boot",
-    "Dutch players to play for Man Utd", "Italian clubs to play in the UCL", "Argentinian scorers in the PL",
-    "Belgian players to win the UCL", "Portuguese players to play for Wolves", "Turkish clubs in the Super Lig",
-    "Scottish players to play in the PL", "Japanese players in the Bundesliga", "Ivorian legends in the Premier League"
+    "Name a player who has played for both Real Madrid & AC Milan",
+    "Name any Stadium in England with 30,000+ capacity",
+    "Name a Brazilian player who has won the Premier League",
+    "Name any player to have played for both Liverpool & Chelsea",
+    "Name a French player currently playing in the Bundesliga",
+    "Name any team that has won the FA Cup",
+    "Name a player with 100+ caps for any European nation",
+    "Name any club currently in the Italian Serie A",
+    "Name a Spanish player who has played in the Premier League",
+    "Name any winner of the African Cup of Nations",
+    "Name a player who played for both Manchester United & Arsenal",
+    "Name any club that has played in a Champions League Final",
+    "Name a Dutch player who has played for Barcelona",
+    "Name any player who has scored 20+ goals in a single PL season",
+    "Name an Argentinian player who has played in Italy",
+    "Name any team currently in the German Bundesliga",
+    "Name a player who has won the World Cup and Champions League",
+    "Name any club based in London",
+    "Name a Portuguese player who has played for Real Madrid",
+    "Name any player to score a hat-trick in the Champions League",
+    "Name a German player who has played for Arsenal",
+    "Name any city that has a team in the top 2 Spanish divisions",
+    "Name a player who has been managed by Jose Mourinho",
+    "Name any club that has won the Europa League / UEFA Cup",
+    "Name a Belgian player who has played in the Premier League"
 ]
 
-# CORRECTED FINAL CHALLENGES
 FINAL_CHALLENGES = [
-    "Name 3 winners of the Ballon d'Or who never won the World Cup",
-    "Name 4 clubs that have won the Champions League exactly once",
-    "Name 3 stadiums that have hosted a World Cup Final",
-    "Name 3 players who have scored in two different World Cup Finals",
-    "Name 4 managers who have won the Champions League with two different clubs",
-    "Name 3 players who have won the Premier League with two different clubs",
-    "Name 4 Brazilian players who have won the Ballon d'Or",
-    "Name 3 African nations that have reached a World Cup Quarter-Final (Only 4 exist!)",
-    "Name 5 players who have won 5 or more Champions League titles",
-    "Name 4 English players who have played for Real Madrid"
+    "Name 3 players who have won the Ballon d'Or but never the Champions League",
+    "Name 4 different clubs that have won the English Top Flight (Pre or Post 1992)",
+    "Name 3 players who have scored in a Champions League Final",
+    "Name 3 cities that have two or more teams in their country's top division",
+    "Name 4 managers who have won the World Cup",
+    "Name 3 players who have played for both Inter Milan and AC Milan",
+    "Name 3 nations that have won the World Cup more than once",
+    "Name 4 players who have played in 4 or more different World Cups",
+    "Name 3 clubs that have won the 'Treble' (League, Cup, UCL/European Cup)",
+    "Name 4 players who have scored over 50 goals for their National Team"
 ]
 
 # --- 3. STATE MANAGEMENT ---
 if 'game_started' not in st.session_state:
     st.session_state.update({
-        'game_started': False, 'grid_size': 4, 'max_dice': 3,
+        'game_started': False, 'grid_size': 4,
         'num_players': 2, 'player_names': [], 'player_data': {},
         'turn': 0, 'rolled': False, 'current_roll': 0, 
         'grid_map': [], 'confirm_reset': False, 'winner': None,
@@ -86,14 +103,7 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"""
-        <div style="text-align:center; padding:100px;">
-            <h1 style="font-size:5rem;">🏆</h1>
-            <h1 style="font-size:3rem; color:white;">FULL TIME!</h1>
-            <h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2>
-            <p style="font-size:1.5rem; color:#888;">The match has ended. You are the champion!</p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
     if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
         st.session_state.game_started = False
         st.session_state.winner = None
@@ -102,12 +112,13 @@ if st.session_state.winner:
 elif not st.session_state.game_started:
     st.title("⚽ Football Path Setup")
     with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
-        st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
-        st.session_state.max_dice = c3.number_input("Max Dice", 1, 6, 3)
+        c1, c2 = st.columns(2)
+        st.session_state.grid_size = c1.number_input("Grid Size (e.g. 4 for 16 squares)", 3, 6, 4)
+        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
+    
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
+    
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
         start_game()
         st.rerun()
@@ -135,19 +146,15 @@ else:
 
     with st.sidebar:
         st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
-        
         last_sq_index = len(st.session_state.grid_map) - 1
 
         if not st.session_state.rolled:
-            if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
-                st.session_state.current_roll = random.randint(1, st.session_state.max_dice)
+            if st.button("🎲 ROLL DICE (Max 3)", use_container_width=True, type="primary"):
+                st.session_state.current_roll = random.randint(1, 3)
                 new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 player['prev'], player['pos'] = player['pos'], new_pos
-                
-                # Update final task every time someone arrives
                 if player['pos'] == last_sq_index:
                     st.session_state.active_final_task = random.choice(FINAL_CHALLENGES)
-                
                 st.session_state.rolled = True
                 st.rerun()
         else:
@@ -155,18 +162,16 @@ else:
             
             if player['pos'] == last_sq_index:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<p style='text-align:center; font-size:1.1rem;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
-                
+                st.markdown(f"<p style='text-align:center;'>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
                     st.rerun()
                 if c2.button("🚫 Missed", use_container_width=True):
-                    player['pos'] = player['prev'] 
+                    player['pos'] = player['prev']
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
-            
             elif player['pos'] != 0:
                 st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
@@ -180,12 +185,23 @@ else:
                     st.session_state.rolled = False
                     st.rerun()
             else:
-                if st.button("End Turn", use_container_width=True):
+                if st.button("Next Turn", use_container_width=True):
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
 
         st.markdown("---")
-        if st.button("🚩 End Match", use_container_width=True):
-            st.session_state.game_started = False
-            st.rerun()
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Match", use_container_width=True):
+                st.session_state.confirm_reset = True
+                st.rerun()
+        else:
+            st.error("Quit Game?")
+            cy, cn = st.columns(2)
+            if cy.button("Yes", use_container_width=True, type="primary"):
+                st.session_state.game_started = False
+                st.session_state.confirm_reset = False
+                st.rerun()
+            if cn.button("No", use_container_width=True):
+                st.session_state.confirm_reset = False
+                st.rerun()
