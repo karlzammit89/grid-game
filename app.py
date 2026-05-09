@@ -2,56 +2,69 @@ import streamlit as st
 import random
 import re
 
-# --- 1. DATA MAPPING (Flags & ESPN Logo IDs) ---
+# --- 1. EXPANDED DATA MAPPING (Flags & ESPN IDs) ---
+# Expanded to include more valid answers for global trivia
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
     "French": "fr", "France": "fr", "Portuguese": "pt", "Portugal": "pt",
     "Dutch": "nl", "Netherlands": "nl", "Brazilian": "br", "Brazil": "br",
-    "Argentinian": "ar", "Argentina": "ar"
+    "Argentinian": "ar", "Argentina": "ar", "Belgian": "be", "Belgium": "be",
+    "Uruguayan": "uy", "Uruguay": "uy", "Egyptian": "eg", "Egypt": "eg",
+    "Norwegian": "no", "Norway": "no", "Scottish": "gb-sct", "Scotland": "gb-sct"
 }
 
-# ESPN Permanent Team IDs for high-res logos
+# Expanded ESPN ID Mapping for more variety in questions
 ESPN_LOGOS = {
-    "Real Madrid": "86", "Barcelona": "83", "Man Utd": "360", 
-    "Manchester United": "360", "Liverpool": "364", "Bayern Munich": "132",
-    "AC Milan": "103", "Juventus": "111", "Chelsea": "363", 
-    "Inter Milan": "110", "PSG": "160", "Arsenal": "359", "Man City": "382"
+    # England
+    "Man Utd": "360", "Manchester United": "360", "Liverpool": "364", 
+    "Arsenal": "359", "Chelsea": "363", "Man City": "382", "Spurs": "367", 
+    "Tottenham": "367", "Aston Villa": "362", "Newcastle": "361",
+    # Spain
+    "Real Madrid": "86", "Barcelona": "83", "Atletico Madrid": "1068", 
+    "Sevilla": "243", "Villarreal": "102",
+    # Italy
+    "AC Milan": "103", "Juventus": "111", "Inter Milan": "110", 
+    "AS Roma": "104", "Napoli": "114",
+    # Germany
+    "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", 
+    "RB Leipzig": "11420",
+    # France
+    "PSG": "160", "Marseille": "176", "Monaco": "174", "Lyon": "167",
+    # Others
+    "Ajax": "148", "Benfica": "190", "Porto": "192"
 }
 
 def get_club_logo_html(text):
-    """Generates HTML for ESPN badges matched to flag height."""
+    """Generates HTML for ESPN badges at 18px."""
     html = ""
     for club, espn_id in ESPN_LOGOS.items():
         if club.lower() in text.lower():
             url = f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png"
-            # Height set to 14px to match flag emoji/image height
-            html += f'<img src="{url}" style="height:14px; vertical-align:middle; margin-left:6px;">'
+            # Height updated to 18px
+            html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-left:6px;">'
     return html
 
 def clean_text_and_add_assets(text):
-    """Cleans text and appends logos/flags to the END of the string."""
+    """Cleans text and appends logos/flags to the END at 18px height."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
-    # Generate Flag HTML
     flag_html = ""
     for word, iso in COUNTRY_DATA.items():
         if word.lower() in clean_text.lower():
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
-            flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
+            # Height set to 18px
+            flag_html = f'<img src="{flag_url}" style="height:18px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
             
-    # Generate Logo HTML
     logo_html = get_club_logo_html(clean_text)
-    
-    # Append both to the end of the question text
     return f"{clean_text} {logo_html}{flag_html}"
 
 # --- 2. LOGIC GENERATORS ---
 def generate_final_challenge():
     big_clubs = list(ESPN_LOGOS.keys())
-    nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
-    leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
+    nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium", "Uruguay"]
+    leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "Eredivisie"]
     
     templates = [
         lambda: f"Name 3 players who have played for both {random.choice(big_clubs)} and {random.choice([c for c in big_clubs if c != 'Real Madrid'])}.",
@@ -61,7 +74,8 @@ def generate_final_challenge():
         lambda: f"Name 4 clubs that have won the {random.choice(['Champions League', 'Europa League', 'Cup Winners Cup'])} at least once.",
         lambda: f"Name 3 stadiums located in {random.choice(['London', 'Madrid', 'Paris', 'Manchester', 'Lisbon', 'Rio de Janeiro'])}.",
         lambda: f"Name 4 players who have scored over 150 Premier League goals.",
-        lambda: f"Name 3 players who have won the World Cup with two different clubs."
+        lambda: f"Name 3 players who have won the World Cup with two different clubs.",
+        lambda: f"Name a manager who has coached in at least 3 of the following: {', '.join(random.sample(leagues, 3))}."
     ]
     return clean_text_and_add_assets(random.choice(templates)())
 
@@ -75,7 +89,12 @@ CRITERIA_POOL = [
     "Name a Dutch player who has played for Barcelona",
     "Name a Portuguese player who has played for Real Madrid",
     "Name a German player who has played for Arsenal",
-    "Name a Belgian player who has played in the Premier League"
+    "Name a Belgian player who has played in the Premier League",
+    "Name a player who won the Ballon d'Or while at Barcelona",
+    "Name an Argentinian player who has played for PSG",
+    "Name a player who has played for both Inter Milan & AC Milan",
+    "Name a Dutch player who played for Man Utd",
+    "Name a player who won the Champions League with 3 different clubs"
 ]
 
 # --- 3. STATE REFRESH LOGIC ---
