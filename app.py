@@ -389,15 +389,15 @@ else:
             # --- UPDATED VIEW ANSWERS SIDEBAR ---
             # Get the raw list of answers
             all_answers = get_answer_logic(task_text)
-            n = len(all_answers)
-            
-            with st.expander(f"👁️ View Answers ({n})"):
-                if n > 0:
-                    # Renders each answer on its own row with a bullet point
-                    formatted_rows = "\n".join([f"* {item}" for item in all_answers])
-                    st.markdown(formatted_rows)
-                else:
-                    st.write("No answers found in database.")
+n = len(all_answers)
+
+        with st.expander(f"👁️ View Answers ({n})"):
+            if n > 0:
+                # Use a list comprehension to build the bulleted text
+                formatted_rows = "\n".join([f"* {item}" for item in all_answers])
+                st.markdown(formatted_rows)
+            else:
+                st.write("No answers found in database.")
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
