@@ -2,84 +2,76 @@ import streamlit as st
 import random
 import re
 
-# --- 1. FLAG IMAGE MAPPING ---
+# --- 1. DATA MAPPING (Flags & Clubs) ---
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
     "French": "fr", "France": "fr", "Portuguese": "pt", "Portugal": "pt",
-    "Dutch": "nl", "Netherlands": "nl", "Croatian": "hr", "Croatia": "hr",
-    "Belgian": "be", "Belgium": "be", "Turkish": "tr", "Turkey": "tr",
-    "Scottish": "gb-sct", "Scotland": "gb-sct", "Welsh": "gb-wls", "Wales": "gb-wls",
-    "Brazilian": "br", "Brazil": "br", "Argentinian": "ar", "Argentina": "ar",
-    "Uruguayan": "uy", "Uruguay": "uy", "Egyptian": "eg", "Senegalese": "sn", 
-    "Moroccan": "ma", "Nigerian": "ng", "Japanese": "jp", "Mexican": "mx", 
-    "Colombian": "co", "American": "us", "Ivorian": "ci", "Ghanaian": "gh"
+    "Dutch": "nl", "Netherlands": "nl", "Brazilian": "br", "Brazil": "br",
+    "Argentinian": "ar", "Argentina": "ar"
 }
 
-def clean_text_and_add_flag(text):
-    clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
+# Mapping names to domains for the Logo CDN
+CLUB_DOMAINS = {
+    "Real Madrid": "realmadrid.com", "Barcelona": "fcbarcelona.com",
+    "Man Utd": "manutd.com", "Liverpool": "liverpoolfc.com",
+    "Bayern Munich": "fcbayern.com", "AC Milan": "acmilan.com",
+    "Juventus": "juventus.com", "Chelsea": "chelseafc.com",
+    "Inter Milan": "inter.it", "PSG": "psg.fr",
+    "Arsenal": "arsenal.com", "Man City": "mancity.com"
+}
+
+def get_club_logo(text):
+    """Detects club names in text and returns HTML for their logo."""
+    logo_html = ""
+    for club, domain in CLUB_DOMAINS.items():
+        if club.lower() in text.lower():
+            url = f"https://logo.clearbit.com/{domain}"
+            logo_html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-right:5px; border-radius:3px;">'
+    return logo_html
+
+def clean_text_and_add_assets(text):
+    """Adds both flags and club logos to the question text."""
+    # Add Flags
     flag_html = ""
     for word, iso in COUNTRY_DATA.items():
-        if word.lower() in clean_text.lower():
+        if word.lower() in text.lower():
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
-            flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
+            flag_html = f'<img src="{flag_url}" style="height:12px; vertical-align:middle; margin-left:5px; border:1px solid #444;">'
             break
-    return f"{clean_text}{flag_html}"
+    
+    # Add Club Logos
+    logos = get_club_logo(text)
+    
+    return f"{logos}{text}{flag_html}"
 
 # --- 2. STRUCTURED LOGIC GENERATOR ---
 def generate_final_challenge():
-    big_clubs = ["Real Madrid", "Barcelona", "Man Utd", "Liverpool", "Bayern Munich", "AC Milan", "Juventus", "Chelsea", "Inter Milan", "PSG", "Arsenal", "Man City"]
-    nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
+    big_clubs = list(CLUB_DOMAINS.keys())
+    nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England"]
     leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
     templates = [
         lambda: f"Name 3 players who have played for both {random.choice(big_clubs)} and {random.choice([c for c in big_clubs if c != 'Real Madrid'])}.",
         lambda: f"Name 4 {random.choice(nations)}n players who have won the {random.choice(leagues)}.",
-        lambda: f"Name 3 nations that have won {random.choice(['the World Cup', 'their Continental Cup', 'the Confederations Cup'])} at least twice.",
-        lambda: f"Name 3 managers who have won the {random.choice(['Champions League', 'Premier League', 'World Cup', 'La Liga'])}.",
-        lambda: f"Name 4 clubs that have won the {random.choice(['Champions League', 'Europa League', 'Cup Winners Cup'])} at least once.",
-        lambda: f"Name 3 stadiums located in {random.choice(['London', 'Madrid', 'Paris', 'Manchester', 'Lisbon', 'Rio de Janeiro'])}.",
-        lambda: f"Name 4 players who have scored {random.choice(['a hat-trick in the UCL', 'in a World Cup Final', '50+ goals for their country', 'over 150 Premier League goals'])}.",
-        lambda: f"Name 3 players who have won the {random.choice(['Champions League', 'World Cup'])} with two different clubs."
+        lambda: f"Name 3 nations that have won the World Cup at least twice.",
+        lambda: f"Name 3 managers who have won the {random.choice(['Champions League', 'Premier League', 'World Cup'])}.",
+        lambda: f"Name 4 clubs that have won the {random.choice(['Champions League', 'Europa League'])} at least once.",
+        lambda: f"Name 3 stadiums located in {random.choice(['London', 'Madrid', 'Paris', 'Manchester'])}.",
+        lambda: f"Name 4 players who have scored over 150 Premier League goals."
     ]
-    return random.choice(templates)()
+    raw_task = random.choice(templates)()
+    return clean_text_assets_no_wrap(raw_task) # Helper for sidebar display
 
-CRITERIA_POOL = [
-    "Name a player who has played for both Real Madrid & AC Milan",
-    "Name any Stadium in England with 30,000+ capacity",
-    "Name a Brazilian player who has won the Premier League",
-    "Name any player to have played for both Liverpool & Chelsea",
-    "Name a French player currently playing in the Bundesliga",
-    "Name any team that has won the FA Cup",
-    "Name a player with 100+ caps for any European nation",
-    "Name any club currently in the Italian Serie A",
-    "Name a Spanish player who has played in the Premier League",
-    "Name any winner of the African Cup of Nations",
-    "Name a player who played for both Manchester United & Arsenal",
-    "Name any club that has played in a Champions League Final",
-    "Name a Dutch player who has played for Barcelona",
-    "Name any player who has scored 20+ goals in a single PL season",
-    "Name an Argentinian player who has played in Italy",
-    "Name any team currently in the German Bundesliga",
-    "Name a player who has won the World Cup and Champions League",
-    "Name any club based in London",
-    "Name a Portuguese player who has played for Real Madrid",
-    "Name any player to score a hat-trick in the Champions League",
-    "Name a German player who has played for Arsenal",
-    "Name any city that has a team in the top 2 Spanish divisions",
-    "Name a player who has been managed by Jose Mourinho",
-    "Name any club that has won the Europa League / UEFA Cup",
-    "Name a Belgian player who has played in the Premier League"
-]
+def clean_text_assets_no_wrap(text):
+    return clean_text_and_add_assets(text)
 
 # --- 3. STATE REFRESH LOGIC ---
 def reset_all_data():
-    """Wipes all session state to ensure a clean start."""
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
 
-# Initialize basic state if not present
 if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4,
@@ -91,11 +83,24 @@ if 'game_started' not in st.session_state:
 
 def start_game():
     total_sq = st.session_state.grid_size ** 2
+    # Pre-select base criteria and clean them with assets
+    base_pool = [
+        "Name a player who played for both Real Madrid & AC Milan",
+        "Name a Brazilian player who has won the Premier League",
+        "Name a French player currently playing in the Bundesliga",
+        "Name a Spanish player who has played in the Premier League",
+        "Name a Dutch player who has played for Barcelona",
+        "Name a Portuguese player who has played for Real Madrid",
+        "Name a German player who has played for Arsenal",
+        "Name a player managed by Jose Mourinho",
+        "Name a Belgian player who has played in the Premier League"
+    ]
     board = [{"task": "KICK OFF"}]
-    selected_tasks = random.sample(CRITERIA_POOL, min(len(CRITERIA_POOL), total_sq - 2))
+    selected_tasks = random.sample(base_pool, min(len(base_pool), total_sq - 2))
     for task in selected_tasks:
-        board.append({"task": clean_text_and_add_flag(task)})
+        board.append({"task": clean_text_and_add_assets(task)})
     board.append({"task": "FINAL WHISTLE"})
+    
     st.session_state.grid_map = board
     st.session_state.player_data = {
         i: {
@@ -108,24 +113,21 @@ def start_game():
     st.session_state.game_started = True
 
 # --- 4. UI ---
-st.set_page_config(page_title="Football Path Trivia", layout="wide")
+st.set_page_config(page_title="Football Path Trivia Pro", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
-    if st.button("🏟️ Return to Menu & Refresh Data", use_container_width=True, type="primary"):
+    st.markdown(f'<div style="text-align:center; padding:100px;"><h1>🏆 FULL TIME!</h1><h2 style="color:{st.session_state.winner["color"]};">Congratulations {st.session_state.winner["name"]}!</h2></div>', unsafe_allow_html=True)
+    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
         reset_all_data()
 
 elif not st.session_state.game_started:
-    st.title("⚽ Football Path Setup")
-    with st.container(border=True):
-        c1, c2 = st.columns(2)
-        st.session_state.grid_size = c1.number_input("Grid Size (e.g. 4 for 16 squares)", 3, 6, 4)
-        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
-    
+    st.title("⚽ Football Path: Pro Edition")
+    c1, c2 = st.columns(2)
+    st.session_state.grid_size = c1.number_input("Grid Size", 3, 6, 4)
+    st.session_state.num_players = c2.number_input("Players", 1, 4, 2)
     cols = st.columns(st.session_state.num_players)
     st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
-    
     if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
         start_game()
         st.rerun()
@@ -133,80 +135,49 @@ elif not st.session_state.game_started:
 else:
     player = st.session_state.player_data[st.session_state.turn]
     
-    st.markdown(f"""
-        <style>
-        .grid-container {{ display: grid; gap: 10px; }}
-        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
-        .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
-        .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
-        .icon-emoji {{ font-size: 1.8rem; margin-bottom: 5px; }}
-        </style>
-    """, unsafe_allow_html=True)
-
-    grid_html = f'<div class="grid-container" style="grid-template-columns: repeat({st.session_state.grid_size}, 1fr);">'
+    # Board Layout
+    grid_html = f'<div style="display: grid; gap: 10px; grid-template-columns: repeat({st.session_state.grid_size}, 1fr);">'
     for i, item in enumerate(st.session_state.grid_map):
-        active = "active-sq" if i == player['pos'] else ""
-        marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        icon = "⚽" if i != 0 and i != len(st.session_state.grid_map)-1 else "🏁" if i == 0 else "🏆"
-        grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div><div class="icon-emoji">{icon}</div><div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div><div style="min-height:30px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
+        active = f"border: 3px solid {player['color']}; box-shadow: 0 0 10px {player['color']};" if i == player['pos'] else "border: 1px solid #333;"
+        marks = "".join([f'<span style="background:{p["color"]}; border-radius:50%; width:20px; height:20px; display:inline-block; margin:2px; font-size:10px; color:white; text-align:center;">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
+        grid_html += f'<div style="background:#1e2129; {active} border-radius:10px; padding:10px; text-align:center; min-height:120px;">'
+        grid_html += f'<div style="color:#eee; font-size:0.8rem;">{item["task"]}</div><div style="margin-top:10px;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
-        st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
-        last_sq_index = len(st.session_state.grid_map) - 1
+        st.markdown(f"<h2 style='color:{player['color']};'>{player['name']}'s Turn</h2>", unsafe_allow_html=True)
+        last_sq = len(st.session_state.grid_map) - 1
 
         if not st.session_state.rolled:
-            if st.button("🎲 ROLL DICE (Max 3)", use_container_width=True, type="primary"):
+            if st.button("🎲 ROLL (Max 3)", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
-                new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
-                player['prev'], player['pos'] = player['pos'], new_pos
-                if player['pos'] == last_sq_index:
+                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq)
+                if player['pos'] == last_sq:
                     st.session_state.active_final_task = generate_final_challenge()
                 st.session_state.rolled = True
                 st.rerun()
         else:
-            st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            
-            if player['pos'] == last_sq_index:
+            st.title(f"🎲 {st.session_state.current_roll}")
+            if player['pos'] == last_sq:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
-                c1, c2 = st.columns(2)
-                if c1.button("🎯 Scored!", use_container_width=True):
+                st.write(st.session_state.active_final_task, unsafe_allow_html=True)
+                if st.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
                     st.rerun()
-                if c2.button("🚫 Missed", use_container_width=True):
-                    player['pos'] = player['prev']
-                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                    st.session_state.rolled = False
-                    st.rerun()
-            elif player['pos'] != 0:
-                st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
-                c1, c2 = st.columns(2)
-                if c1.button("✅ Success", use_container_width=True):
-                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                    st.session_state.rolled = False
-                    st.rerun()
-                if c2.button("❌ Fail", use_container_width=True):
-                    player['pos'] = player['prev']
-                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                    st.session_state.rolled = False
-                    st.rerun()
             else:
-                if st.button("Next Turn", use_container_width=True):
+                st.write(f"Provide {st.session_state.current_roll} answers for the square task.")
+                if st.button("✅ Success", use_container_width=True):
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
+            
+            if st.button("❌ Fail / Back", use_container_width=True):
+                player['pos'] = player['prev']
+                st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                st.session_state.rolled = False
+                st.rerun()
 
         st.markdown("---")
-        if not st.session_state.confirm_reset:
-            if st.button("🚩 End Match", use_container_width=True):
-                st.session_state.confirm_reset = True
-                st.rerun()
-        else:
-            st.error("Quit and Clear Data?")
-            cy, cn = st.columns(2)
-            if cy.button("Yes", use_container_width=True, type="primary"):
+        if st.checkbox("🚩 End Match?"):
+            if st.button("Confirm Quit", type="primary"):
                 reset_all_data()
-            if cn.button("No", use_container_width=True):
-                st.session_state.confirm_reset = False
-                st.rerun()
