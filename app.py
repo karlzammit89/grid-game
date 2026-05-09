@@ -387,13 +387,16 @@ else:
             all_answers = get_answer_logic(task_text)
 n = len(all_answers)
 
-        with st.expander(f"👁️ View Answers ({n})"):
-            if n > 0:
-                # Use a list comprehension to build the bulleted text
-                formatted_rows = "\n".join([f"* {item}" for item in all_answers])
-                st.markdown(formatted_rows)
-            else:
-                st.write("No answers found in database.")
+        all_answers = get_answer_logic(task_text)
+n = len(all_answers)
+
+with st.expander(f"👁️ View Answers ({n})"):
+    if n > 0:
+        # Use a list comprehension to build the bulleted text
+        formatted_rows = "\n".join([f"* {item}" for item in all_answers])
+        st.markdown(formatted_rows)
+    else:
+        st.write("No answers found in database.")
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
