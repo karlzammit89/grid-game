@@ -226,7 +226,7 @@ st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
     st.balloons()
-    st.markdown(f"<div style='text-align:center; padding:100px;'><h1 style='font-size:5rem;'>🏆</h1><h2 style='color:{st.session_state.winner['color']};'>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; padding:100px;'><h1 style='font-size:5rem;'>🥇</h1><h2 style='color:{st.session_state.winner['color']};'>Congratulations {st.session_state.winner['name']}!</h2></div>", unsafe_allow_html=True)
     if st.button("🏟️ Return to Menu", use_container_width=True): reset_all_data()
 
 elif not st.session_state.game_started:
@@ -274,7 +274,7 @@ else:
         else:
             is_last = player['pos'] == len(st.session_state.grid_map) - 1
             if is_last:
-                st.markdown(f"<div style='text-align:center; font-size:1.5rem; font-weight:800; color:#FFD700; margin-bottom:10px;'>⭐⭐ BONUS QUESTION ⭐⭐</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.5rem; font-weight:800; color:#FFD700; margin-bottom:10px;'>⭐ BONUS QUESTION ⭐</div>", unsafe_allow_html=True)
                 task_text = st.session_state.active_final_task['text']
                 current_assets = st.session_state.active_final_task['assets']
                 bonus_count = 5 if any(x in task_text.lower() for x in ["player who played", "stadium", "team whose", "team that has won"]) else 3
