@@ -411,21 +411,9 @@ else:
                 if hardcoded_ans:
                     # Each answer on its own row
                     for answer in hardcoded_ans[:15]:
-                        st.write(f"• {answer}")
+                        st.write(f"{answer}")
                 else:
                     st.info("No answers found in database.")
-
-            # SEARCH BUTTON REMOVED
-                
-                # Link for all questions
-                search_query = task_text.replace("Name a", "").strip()
-                st.markdown(f"""
-                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555;">
-                        🔍 Search for Answers
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
