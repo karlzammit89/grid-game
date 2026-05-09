@@ -59,6 +59,40 @@ EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
 # --- 2. ENGINES ---
+
+def get_answer_logic(task_text):
+    """Hardcoded data lookup for Trophies, Stadiums, and Kits."""
+    t_lower = task_text.lower()
+    
+    # --- HARDCODED DATASETS ---
+    TROPHY_DATA = {
+        "bundesliga": ["Bayern Munich", "Borussia Dortmund", "Bayer Leverkusen", "Werder Bremen", "Stuttgart", "Wolfsburg"],
+        "premier league": ["Man Utd", "Liverpool", "Man City", "Arsenal", "Chelsea", "Leicester", "Blackburn"],
+        "la liga": ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla", "Real Betis"],
+        "champions league": ["Real Madrid", "AC Milan", "Liverpool", "Bayern Munich", "Barcelona", "Inter Milan", "Man Utd", "Chelsea", "Man City"]
+    }
+    STADIUM_DATA = {
+        "england": ["Wembley", "Old Trafford", "Tottenham Stadium", "Emirates", "Anfield", "Etihad", "St James' Park"],
+        "spain": ["Camp Nou", "Bernabéu", "Metropolitano", "Mestalla", "San Mamés", "Sánchez Pizjuán"],
+        "germany": ["Signal Iduna Park", "Allianz Arena", "Olympiastadion", "Veltins-Arena", "Deutsche Bank Park"]
+    }
+    KIT_DATA = {
+        "red": ["Liverpool", "Man Utd", "Arsenal", "Bayern Munich", "Benfica", "Ajax"],
+        "blue": ["Chelsea", "Man City", "Everton", "Napoli", "Inter Milan", "PSG", "Lazio"],
+        "white": ["Real Madrid", "Tottenham", "Valencia", "Leeds", "Lyon", "Santos"],
+        "yellow": ["Dortmund", "Villarreal", "Watford", "Norwich", "Cádiz"],
+        "green": ["Celtic", "Sporting CP", "Real Betis", "Palmeiras", "Sassuolo"]
+    }
+
+    # Search logic
+    for league, winners in TROPHY_DATA.items():
+        if league in t_lower: return winners
+    for country, stadiums in STADIUM_DATA.items():
+        if country in t_lower: return stadiums
+    for color, teams in KIT_DATA.items():
+        if color in t_lower: return teams
+    return []
+
 @st.cache_data(show_spinner=False)
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
@@ -326,15 +360,21 @@ else:
 
             # --- ANSWERS SECTION ---
             with st.expander("👁️ View Answers"):
-                if "both" in task_text.lower():
+                # 1. Check Hardcoded Data first (Trophies, Stadiums, Kits)
+                hardcoded_ans = get_answer_logic(task_text)
+                
+                # 2. Check Club Connections (Scraper)
+                if not hardcoded_ans and "both" in task_text.lower():
                     match = re.search(r"both (.*?) & (.*)", task_text)
                     if match:
                         c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
-                        ans_list = fetch_shared_players(c1_name, c2_name)
-                        if ans_list: 
-                            st.write(", ".join(ans_list[:15]))
-                        else: 
-                            st.info("No common players found in quick-lookup.")
+                        hardcoded_ans = fetch_shared_players(c1_name, c2_name)
+
+                # Display Logic
+                if hardcoded_ans:
+                    st.write(", ".join(hardcoded_ans[:15]))
+                else:
+                    st.info("No answers found in quick-lookup.")
                 
                 # Link for all questions
                 search_query = task_text.replace("Name a", "").strip()
