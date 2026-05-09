@@ -2,30 +2,34 @@ import streamlit as st
 import random
 import re
 
-# --- 1. SMART DATA MAPPING (Expanded with 2026 FIFA Top 50) ---
+# --- 1. SMART DATA MAPPING (Expanded May 2026 FIFA Rankings & ESPN IDs) ---
 COUNTRY_DATA = {
-    # Top 10
+    # Top Tier & Europe
     "French": "fr", "France": "fr", "Spanish": "es", "Spain": "es",
-    "Argentinian": "ar", "Argentina": "ar", "English": "gb-eng", "England": "gb-eng",
-    "Portuguese": "pt", "Portugal": "pt", "Brazilian": "br", "Brazil": "br",
-    "Dutch": "nl", "Netherlands": "nl", "Moroccan": "ma", "Morocco": "ma",
-    "Belgian": "be", "Belgium": "be", "German": "de", "Germany": "de",
-    # 11-25 & Notable Additions
-    "Croatian": "hr", "Croatia": "hr", "Italian": "it", "Italy": "it",
-    "Colombian": "co", "Colombia": "co", "Senegalese": "sn", "Senegal": "sn",
-    "Mexican": "mx", "Mexico": "mx", "American": "us", "USA": "us",
-    "Uruguayan": "uy", "Uruguay": "uy", "Japanese": "jp", "Japan": "jp",
-    "Swiss": "ch", "Switzerland": "ch", "Danish": "dk", "Denmark": "dk",
-    "Turkish": "tr", "Türkiye": "tr", "Ecuadorian": "ec", "Ecuador": "ec",
-    "Austrian": "at", "Austria": "at", "South Korean": "kr", "South Korea": "kr",
-    "Nigerian": "ng", "Nigeria": "ng", "Australian": "au", "Australia": "au",
-    "Algerian": "dz", "Algeria": "dz", "Egyptian": "eg", "Egypt": "eg",
-    "Canadian": "ca", "Canada": "ca", "Norwegian": "no", "Norway": "no",
-    "Ukrainian": "ua", "Ukraine": "ua", "Ivorian": "ci", "Côte d'Ivoire": "ci",
+    "English": "gb-eng", "England": "gb-eng", "Portuguese": "pt", "Portugal": "pt",
+    "Dutch": "nl", "Netherlands": "nl", "Belgian": "be", "Belgium": "be",
+    "German": "de", "Germany": "de", "Italian": "it", "Italy": "it",
+    "Croatian": "hr", "Croatia": "hr", "Swiss": "ch", "Switzerland": "ch",
+    "Danish": "dk", "Denmark": "dk", "Turkish": "tr", "Türkiye": "tr",
+    "Austrian": "at", "Austria": "at", "Ukrainian": "ua", "Ukraine": "ua",
     "Scottish": "gb-sct", "Scotland": "gb-sct", "Swedish": "se", "Sweden": "se",
-    "Welsh": "gb-wls", "Wales": "gb-wls", "Polish": "pl", "Poland": "pl"
+    "Welsh": "gb-wls", "Wales": "gb-wls", "Polish": "pl", "Poland": "pl",
+    "Norwegian": "no", "Norway": "no",
+    # South America
+    "Argentinian": "ar", "Argentina": "ar", "Brazilian": "br", "Brazil": "br",
+    "Colombian": "co", "Colombia": "co", "Uruguayan": "uy", "Uruguay": "uy",
+    "Ecuadorian": "ec", "Ecuador": "ec",
+    # Africa (CAF)
+    "Moroccan": "ma", "Morocco": "ma", "Senegalese": "sn", "Senegal": "sn",
+    "Nigerian": "ng", "Nigeria": "ng", "Egyptian": "eg", "Egypt": "eg",
+    "Ivorian": "ci", "Côte d'Ivoire": "ci", "Algerian": "dz", "Algeria": "dz",
+    # North America & Asia (CONCACAF/AFC)
+    "American": "us", "USA": "us", "Mexican": "mx", "Mexico": "mx",
+    "Canadian": "ca", "Canada": "ca", "Japanese": "jp", "Japan": "jp",
+    "South Korean": "kr", "South Korea": "kr", "Australian": "au", "Australia": "au"
 }
 
+# ESPN Permanent Team IDs
 ESPN_LOGOS = {
     "Man Utd": "360", "Manchester United": "360", "Liverpool": "364", "Arsenal": "359", 
     "Chelsea": "363", "Man City": "382", "Spurs": "367", "Tottenham": "367",
@@ -37,6 +41,7 @@ ESPN_LOGOS = {
     "Porto": "192", "Sporting CP": "193"
 }
 
+# Smart Pairs for "Played for both" logic
 VALID_CLUB_PAIRS = [
     ("Real Madrid", "AC Milan"), ("Barcelona", "PSG"), ("Man Utd", "Real Madrid"),
     ("Liverpool", "Chelsea"), ("Inter Milan", "AC Milan"), ("Bayern Munich", "Real Madrid"),
@@ -46,6 +51,7 @@ VALID_CLUB_PAIRS = [
 ]
 
 def get_club_logo_html(text):
+    """Fetches badges from ESPN Production API"""
     html = ""
     for club, espn_id in ESPN_LOGOS.items():
         if club.lower() in text.lower():
@@ -54,18 +60,24 @@ def get_club_logo_html(text):
     return html
 
 def clean_text_and_add_assets(text):
+    """Cleans text and appends 18px logos and 14px flags to the END."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
+    
+    # Flag Logic (14px)
     flag_html = ""
     for word, iso in COUNTRY_DATA.items():
         if word.lower() in clean_text.lower():
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
+            
+    # Logo Logic (18px)
     logo_html = get_club_logo_html(clean_text)
     return f"{clean_text} {logo_html}{flag_html}"
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
+    """Smart question generation using mapped data."""
     templates = [
         lambda: f"Name a player who played for both {random.choice(VALID_CLUB_PAIRS)[0]} & {random.choice(VALID_CLUB_PAIRS)[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(list(ESPN_LOGOS.keys()))}",
@@ -74,3 +86,131 @@ def generate_random_task():
         lambda: f"Name a {random.choice(list(COUNTRY_DATA.keys()))} player who has played in the Champions League"
     ]
     return clean_text_and_add_assets(random.choice(templates)())
+
+# --- 3. UI ENGINE & STATE ---
+def reset_all_data():
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+if 'game_started' not in st.session_state:
+    st.session_state.update({
+        'game_started': False, 'grid_size': 4,
+        'num_players': 2, 'player_names': [], 'player_data': {},
+        'turn': 0, 'rolled': False, 'current_roll': 0, 
+        'grid_map': [], 'confirm_reset': False, 'winner': None,
+        'active_final_task': None
+    })
+
+def start_game():
+    total_sq = st.session_state.grid_size ** 2
+    board = [{"task": "KICK OFF"}]
+    for _ in range(total_sq - 2):
+        board.append({"task": generate_random_task()})
+    board.append({"task": "FINAL WHISTLE"})
+    st.session_state.grid_map = board
+    st.session_state.player_data = {
+        i: {
+            "pos": 0, "prev": 0, 
+            "name": st.session_state.player_names[i] or f"Manager {i+1}",
+            "initials": (st.session_state.player_names[i][:2] if st.session_state.player_names[i] else f"M{i+1}").upper(),
+            "color": ["#FF4B4B", "#1C83E1", "#00C04A", "#FFD700"][i]
+        } for i in range(st.session_state.num_players)
+    }
+    st.session_state.game_started = True
+
+# --- 4. MAIN DASHBOARD ---
+st.set_page_config(page_title="Football Path Trivia", layout="wide")
+
+if st.session_state.winner:
+    st.balloons()
+    st.markdown(f"""<div style="text-align:center; padding:100px;"><h1 style="font-size:5rem;">🏆</h1><h1 style="font-size:3rem; color:white;">FULL TIME!</h1><h2 style="font-size:2.5rem; color:{st.session_state.winner['color']};">Congratulations {st.session_state.winner['name']}!</h2></div>""", unsafe_allow_html=True)
+    if st.button("🏟️ Return to Menu", use_container_width=True, type="primary"):
+        reset_all_data()
+
+elif not st.session_state.game_started:
+    st.title("⚽ Football Path Setup")
+    with st.container(border=True):
+        c1, c2 = st.columns(2)
+        st.session_state.grid_size = c1.number_input("Grid Size (4 = 4x4, 5 = 5x5)", 3, 6, 4)
+        st.session_state.num_players = c2.number_input("Number of Players", 1, 4, 2)
+    cols = st.columns(st.session_state.num_players)
+    st.session_state.player_names = [cols[i].text_input(f"Manager {i+1}", key=f"p{i}") for i in range(st.session_state.num_players)]
+    if st.button("🚀 START MATCH", use_container_width=True, type="primary"):
+        start_game()
+        st.rerun()
+
+else:
+    player = st.session_state.player_data[st.session_state.turn]
+    st.markdown(f"""
+        <style>
+        .grid-container {{ display: grid; gap: 12px; grid-template-columns: repeat({st.session_state.grid_size}, 1fr); }}
+        .grid-item {{ background: #1e2129; border: 1px solid #333; border-radius: 12px; padding: 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }}
+        .active-sq {{ border: 3px solid {player['color']}; box-shadow: 0 0 15px {player['color']}55; }}
+        .p-tag {{ border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid #fff; margin: 1px; }}
+        .icon-emoji {{ font-size: 1.8rem; margin-bottom: 5px; }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    grid_html = '<div class="grid-container">'
+    for i, item in enumerate(st.session_state.grid_map):
+        active = "active-sq" if i == player['pos'] else ""
+        marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
+        icon = "⚽" if i != 0 and i != len(st.session_state.grid_map)-1 else "🏁" if i == 0 else "🏆"
+        grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div><div class="icon-emoji">{icon}</div><div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div><div style="min-height:30px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
+    st.markdown(grid_html + "</div>", unsafe_allow_html=True)
+
+    with st.sidebar:
+        st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
+        last_sq_index = len(st.session_state.grid_map) - 1
+
+        if not st.session_state.rolled:
+            if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
+                st.session_state.current_roll = random.randint(1, 3)
+                player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, last_sq_index)
+                if player['pos'] == last_sq_index:
+                    st.session_state.active_final_task = generate_random_task()
+                st.session_state.rolled = True
+                st.rerun()
+        else:
+            st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
+            if player['pos'] == last_sq_index:
+                st.warning("🥅 GOAL LINE CHALLENGE!")
+                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                if c1.button("🎯 Scored!", use_container_width=True):
+                    st.session_state.winner = player
+                    st.rerun()
+                if c2.button("🚫 Missed", use_container_width=True):
+                    player['pos'] = player['prev']
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+            elif player['pos'] != 0:
+                st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                if c1.button("✅ Success", use_container_width=True):
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+                if c2.button("❌ Fail", use_container_width=True):
+                    player['pos'] = player['prev']
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+            else:
+                if st.button("Next Turn", use_container_width=True):
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+
+        st.markdown("---")
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Match", use_container_width=True):
+                st.session_state.confirm_reset = True
+                st.rerun()
+        else:
+            st.error("Quit?")
+            cy, cn = st.columns(2)
+            if cy.button("Yes", use_container_width=True): reset_all_data()
+            if cn.button("No", use_container_width=True): st.session_state.confirm_reset = False; st.rerun()
