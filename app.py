@@ -2,9 +2,8 @@ import streamlit as st
 import random
 import re
 
-# --- 1. SMART DATA MAPPING (2026 FIFA Rankings + Correct Orthography) ---
+# --- 1. SMART DATA MAPPING ---
 COUNTRY_DATA = {
-    # Top Tier & Europe
     "French": "fr", "France": "fr", "Spanish": "es", "Spain": "es",
     "English": "gb-eng", "England": "gb-eng", "Portuguese": "pt", "Portugal": "pt",
     "Dutch": "nl", "Netherlands": "nl", "Belgian": "be", "Belgium": "be",
@@ -15,15 +14,12 @@ COUNTRY_DATA = {
     "Scottish": "gb-sct", "Scotland": "gb-sct", "Swedish": "se", "Sweden": "se",
     "Welsh": "gb-wls", "Wales": "gb-wls", "Polish": "pl", "Poland": "pl",
     "Norwegian": "no", "Norway": "no",
-    # South America
     "Argentinian": "ar", "Argentina": "ar", "Brazilian": "br", "Brazil": "br",
     "Colombian": "co", "Colombia": "co", "Uruguayan": "uy", "Uruguay": "uy",
     "Ecuadorian": "ec", "Ecuador": "ec",
-    # Africa (CAF)
     "Moroccan": "ma", "Morocco": "ma", "Senegalese": "sn", "Senegal": "sn",
     "Nigerian": "ng", "Nigeria": "ng", "Egyptian": "eg", "Egypt": "eg",
     "Ivorian": "ci", "Côte d'Ivoire": "ci", "Algerian": "dz", "Algeria": "dz",
-    # North America & Asia
     "American": "us", "USA": "us", "Mexican": "mx", "Mexico": "mx",
     "Canadian": "ca", "Canada": "ca", "Japanese": "jp", "Japan": "jp",
     "South Korean": "kr", "South Korea": "kr", "Australian": "au", "Australia": "au"
@@ -37,15 +33,10 @@ ESPN_LOGOS = {
     "Juventus": "111", "Inter Milan": "110", "AS Roma": "104", "Napoli": "114", 
     "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", "PSG": "160", 
     "Marseille": "176", "Monaco": "174", "Ajax": "148", "PSV Eindhoven": "149", 
-    "PSV": "149", "Feyenoord": "151", "Benfica": "190", "Porto": "192", "Sporting CP": "193"
+    "PSV": "149", "Feyenoord": "151", "Benfica": "190", "Porto": "437", "Sporting CP": "193"
 }
 
-VALID_CLUB_PAIRS = [
-    ("Real Madrid", "AC Milan"), ("Barcelona", "PSG"), ("Man Utd", "Real Madrid"),
-    ("Liverpool", "Chelsea"), ("Inter Milan", "AC Milan"), ("Bayern Munich", "Real Madrid"),
-    ("Arsenal", "Barcelona"), ("Juventus", "Bayern Munich"), ("Man City", "Barcelona"),
-    ("Chelsea", "Real Madrid"), ("PSG", "AC Milan"), ("Man Utd", "Juventus")
-]
+VALID_CLUB_PAIRS = list(ESPN_LOGOS.keys())
 
 def get_club_logo_html(text):
     html = ""
@@ -73,12 +64,16 @@ def clean_text_and_add_assets(text):
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
-    nation = random.choice(list(COUNTRY_DATA.keys()))
     # Grammar Check: use 'an' if nation starts with a vowel
+    nation = random.choice(list(COUNTRY_DATA.keys()))
     article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
     
+    # Unique Club Selection logic
+    clubs = random.sample(list(ESPN_LOGOS.keys()), 2)
+    club_a, club_b = clubs[0], clubs[1]
+
     templates = [
-        lambda: f"Name a player who played for both {random.choice(VALID_CLUB_PAIRS)[0]} & {random.choice(VALID_CLUB_PAIRS)[1]}",
+        lambda: f"Name a player who played for both {club_a} & {club_b}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Turkish'])} player who played for {random.choice(list(ESPN_LOGOS.keys()))}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
         lambda: f"Name a manager who coached {random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan'])}"
