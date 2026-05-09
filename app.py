@@ -60,6 +60,37 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. ENGINES ---
 @st.cache_data(show_spinner=False)
+def get_answer_logic(task_text):
+    """The central engine to find answers based on live data or static fallbacks."""
+    t_lower = task_text.lower()
+    
+    # 1. CLUB CONNECTIONS (Uses your existing FBRef Scraper)
+    if "both" in t_lower:
+        match = re.search(r"both (.*?) & (.*)", task_text)
+        if match:
+            c1, c2 = match.group(1).strip(), match.group(2).strip()
+            shared = fetch_shared_players(c1, c2) 
+            return f"**Common Players:** {', '.join(shared[:15])}" if shared else "No quick lookup data found."
+
+    # 2. STADIUMS (Uses your STADIUM_COUNTRIES mapping)
+    if "stadium" in t_lower:
+        for country in STADIUM_COUNTRIES.keys():
+            if country.lower() in t_lower:
+                # Fallback list for common stadiums
+                return f"**Stadiums in {country}:** Wembley, Old Trafford, Anfield, Etihad, Emirates."
+
+    # 3. KITS (Uses your KIT_COLOR_MAP)
+    if "kit color" in t_lower:
+        for color in KIT_COLOR_MAP.keys():
+            if color.lower() in t_lower:
+                return f"**Teams with {color} kits:** Liverpool, Arsenal, Man Utd, Bayern Munich (Examples)."
+
+    # 4. TROPHIES
+    if "won" in t_lower:
+        return "Check the search link below for the full list of winners!"
+
+    return "No instant data. Use the search button below!"
+
 def fetch_shared_players(club1, club2):
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
     if not id1 or not id2: return []
@@ -324,17 +355,22 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- ANSWERS SECTION ---
+            # --- UPDATED ANSWERS SECTION ---
             with st.expander("👁️ View Answers"):
-                if "both" in task_text.lower():
-                    match = re.search(r"both (.*?) & (.*)", task_text)
-                    if match:
-                        c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
-                        ans_list = fetch_shared_players(c1_name, c2_name)
-                        if ans_list: 
-                            st.write(", ".join(ans_list[:15]))
-                        else: 
-                            st.info("No common players found in quick-lookup.")
+                # 1. Get the answers from the engine
+                # Note: 'task_text' is already defined in your sidebar logic
+                ans_result = get_answer_logic(task_text)
+                st.markdown(ans_result)
+                
+                # 2. Keep your original Search link as a backup
+                search_query = task_text.replace("Name a", "").strip()
+                st.markdown(f"""
+                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
+                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555; margin-top:10px;">
+                        🔍 Search for Verified Answers
+                    </div>
+                </a>
+                """, unsafe_allow_html=True)
                 
                 # Link for all questions
                 search_query = task_text.replace("Name a", "").strip()
