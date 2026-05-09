@@ -29,6 +29,7 @@ COUNTRY_DATA = {
     "South Korean": "kr", "South Korea": "kr", "Australian": "au", "Australia": "au"
 }
 
+# ESPN Permanent Team IDs - Updated PSV & Dutch teams
 ESPN_LOGOS = {
     "Man Utd": "360", "Manchester United": "360", "Liverpool": "364", "Arsenal": "359", 
     "Chelsea": "363", "Man City": "382", "Spurs": "367", "Tottenham": "367",
@@ -36,8 +37,8 @@ ESPN_LOGOS = {
     "Atletico Madrid": "1068", "Sevilla": "243", "Villarreal": "102", "AC Milan": "103", 
     "Juventus": "111", "Inter Milan": "110", "AS Roma": "104", "Napoli": "114", 
     "Bayern Munich": "132", "Dortmund": "124", "Leverkusen": "131", "PSG": "160", 
-    "Marseille": "176", "Monaco": "174", "Ajax": "148", "PSV": "149", "Benfica": "190", 
-    "Porto": "192", "Sporting CP": "193"
+    "Marseille": "176", "Monaco": "174", "Ajax": "148", "PSV Eindhoven": "149", 
+    "PSV": "149", "Feyenoord": "151", "Benfica": "190", "Porto": "192", "Sporting CP": "193"
 }
 
 VALID_CLUB_PAIRS = [
@@ -49,14 +50,20 @@ VALID_CLUB_PAIRS = [
 
 def get_club_logo_html(text):
     html = ""
-    for club, espn_id in ESPN_LOGOS.items():
+    # Sort keys by length descending to prevent 'PSV Eindhoven' being caught by 'PSV' logic first
+    sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
+    found_ids = set()
+    
+    for club in sorted_clubs:
         if club.lower() in text.lower():
-            url = f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png"
-            html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-left:6px;">'
+            espn_id = ESPN_LOGOS[club]
+            if espn_id not in found_ids:
+                url = f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png"
+                html += f'<img src="{url}" style="height:18px; vertical-align:middle; margin-left:6px;">'
+                found_ids.add(espn_id)
     return html
 
 def clean_text_and_add_assets(text):
-    # No longer stripping non-ASCII so characters like 'ü' and 'ô' remain intact
     clean_text = text.strip()
     flag_html = ""
     for word, iso in COUNTRY_DATA.items():
