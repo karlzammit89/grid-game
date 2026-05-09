@@ -382,9 +382,11 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-            # --- SIDEBAR TASK & ANSWERS SECTION ---
+            # --- SIDEBAR LOGIC ---
+if not st.session_state.rolled:
+    st.write("Please roll the dice to get a task!")
 else:
-    # 1. Define the task first so other functions can see it
+    # 1. Define the task first
     task_text = st.session_state.grid_map[player['pos']]['task']
     st.info(f"Task: {task_text}")
     
@@ -403,7 +405,7 @@ else:
 
     st.markdown("---")
     
-    # --- GAME CONTROLS ---
+    # --- GAME CONTROLS (End Game Buttons) ---
     if not st.session_state.confirm_reset:
         if st.button("🚩 End Game", use_container_width=True): 
             st.session_state.confirm_reset = True
@@ -412,7 +414,9 @@ else:
         st.warning("Confirm Reset?")
         rc1, rc2 = st.columns(2)
         if rc1.button("Confirm", type="primary", use_container_width=True): 
-            reset_all_data()
+            # Make sure reset_all_data() is defined in your script
+            st.session_state.clear() 
+            st.rerun()
         if rc2.button("Cancel", use_container_width=True): 
             st.session_state.confirm_reset = False
             st.rerun()
