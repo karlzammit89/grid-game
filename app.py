@@ -32,7 +32,6 @@ KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
-# Map competitions to specific flag codes or emojis
 COMPETITION_GEOGRAPHY = {
     "Champions League": "eu",
     "Europa League": "eu",
@@ -52,7 +51,7 @@ COMPETITION_GEOGRAPHY = {
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     
-    # Competition Detection Logic
+    # Competition Detection for Trophy Header
     for comp, geo in COMPETITION_GEOGRAPHY.items():
         if comp.lower() in text.lower():
             if "🏆" not in assets["emojis"]:
@@ -62,8 +61,9 @@ def get_assets(text):
                     assets["emojis"].append("🌍")
             else:
                 assets["flags"].append(f"https://flagcdn.com/w40/{geo}.png")
-            break # Avoid double flags for one task
+            break
 
+    # Stadium Detection for Header
     if "stadium" in text.lower():
         assets["emojis"].append("🏟️")
         
@@ -76,7 +76,7 @@ def get_assets(text):
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
                 
-    # Nationality Detection (only if a competition flag hasn't been added yet)
+    # Nationality Detection (Fallback if no competition flag)
     if not assets["flags"]:
         search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
                        "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
@@ -98,7 +98,6 @@ def clean_text_via_regex(text):
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    # Order: Trophy/Emoji -> Flag -> Logo
     for e in list(dict.fromkeys(assets["emojis"])):
         html += f'<span style="font-size:{size_emojis};">{e}</span>'
     for f in assets["flags"]:
@@ -122,6 +121,7 @@ def generate_random_task():
     pair = random.sample(clubs_list, 2)
     comp = random.choice(competitions)
     
+    # Text templates are now strictly prose (no emoji injection)
     templates = [
         lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
@@ -135,7 +135,6 @@ def generate_random_task():
     return random.choice(templates)()
 
 # --- 4. STATE MANAGEMENT & GAME ENGINE ---
-# (State management code remains the same as the previous functional version)
 def reset_all_data():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
