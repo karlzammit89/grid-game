@@ -49,10 +49,29 @@ EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
-def articulate_task(subject_type, target, action="played for"):
-    # Grammar Fix: Strip nested phrasing if target is passed accidentally as a full task
-    clean_target = target.replace("Name a player who ", "").replace("won ", "").replace("has won ", "").replace("the ", "")
+def smart_pluralize(text, count):
+    if count <= 1:
+        return text
     
+    # Replace "Name a player" or "Name an [Nationality] player" with "Name [count] ... players"
+    # Handles "Name a French player" -> "Name 3 French players"
+    # Handles "Name a player" -> "Name 3 players"
+    text = re.sub(r"Name a[n]? (\w+) player", f"Name {count} \\1 players", text)
+    text = re.sub(r"Name a player", f"Name {count} players", text)
+    
+    # Handles "Name a team" -> "Name 3 teams"
+    text = re.sub(r"Name a team", f"Name {count} teams", text)
+    
+    # Handles "Name a stadium" -> "Name 3 stadiums"
+    text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
+    
+    # Handles "Name a manager" -> "Name 3 managers"
+    text = re.sub(r"Name a manager", f"Name {count} managers", text)
+    
+    return text
+
+def articulate_task(subject_type, target, action="played for"):
+    clean_target = target.replace("Name a player who ", "").replace("won ", "").replace("has won ", "").replace("the ", "")
     article = "an" if subject_type[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
     needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
                  "Europa League", "World Cup", "Euros", "Copa America", 
@@ -77,12 +96,10 @@ def get_assets(text):
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-            
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
-            
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
     
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
@@ -93,7 +110,6 @@ def get_assets(text):
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
-                
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in clean_text:
             assets["emojis"].append(emoji)
@@ -120,7 +136,6 @@ def generate_random_task(categories):
     all_nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
-    
     pool = []
     if "Club Connections" in categories: pool.extend([1, 2, 3])
     if "Stadiums" in categories: pool.append(4)
@@ -192,7 +207,6 @@ def start_game():
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF", "assets": {"flags":[], "logos":[], "emojis":["🏁"]}}]
     unique_tasks = set()
-    
     attempts = 0
     while len(unique_tasks) < (total_sq - 2) and attempts < 2000:
         new_task = generate_random_task(st.session_state.selected_categories)
@@ -268,19 +282,13 @@ else:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, 3)
                 player['prev'], player['pos'] = player['pos'], min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
-                
-                # Check for final whistle and pre-generate task to prevent race condition error
                 if player['pos'] == len(st.session_state.grid_map)-1:
                     t = generate_random_task(st.session_state.selected_categories)
                     st.session_state.active_final_task = {"text": t, "assets": get_assets(t)}
-                
                 st.session_state.rolled = True
                 st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
-            
-            # --- FIXED ERROR SECTION ---
-            # Safely check if we are on the last square AND the task has been created
             is_last_square = player['pos'] == len(st.session_state.grid_map) - 1
             
             if is_last_square and st.session_state.active_final_task:
@@ -289,11 +297,13 @@ else:
             else:
                 current_assets = st.session_state.grid_map[player['pos']]['assets']
                 task_text = st.session_state.grid_map[player['pos']]['task']
-            # ---------------------------
+            
+            # Applying smart pluralization to the sidebar display text
+            display_text = smart_pluralize(task_text, st.session_state.current_roll)
 
             with st.container(border=True):
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
-                st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{task_text}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{display_text}</div>", unsafe_allow_html=True)
             
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
