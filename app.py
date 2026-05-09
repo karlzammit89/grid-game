@@ -62,7 +62,7 @@ def clean_text_via_regex(text):
     return re.sub(r'[^\w\s]', '', text)
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
-    html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 5px 0;">'
+    html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
     for e in assets["emojis"]:
         html += f'<span style="font-size:{size_emojis};">{e}</span>'
     for f in assets["flags"]:
@@ -181,19 +181,20 @@ else:
                 st.session_state.rolled = True
                 st.rerun()
         else:
-            # Added dice emoji here
-            st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:0px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
             
             current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
             task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
             
-            with st.container(border=True):
-                st.markdown(f"<p style='text-align:center; color:#aaa; font-size:0.85rem; margin-bottom:-5px; margin-top:5px;'>Provide <b>{st.session_state.current_roll}</b> answers for:</p>", unsafe_allow_html=True)
-                st.markdown(format_header_icons(current_assets, size_logos="28px", size_emojis="24px"), unsafe_allow_html=True)
-                # Added padding-bottom to match the top spacing
-                st.markdown(f"<div style='text-align:center; font-size:1rem; font-style:italic; font-weight:600; padding: 5px 10px 15px 10px; color:#fff; line-height:1.2;'>{task_text}</div>", unsafe_allow_html=True)
+            # Singular/Plural logic
+            word_choice = "answer" if st.session_state.current_roll == 1 else "answers"
 
-            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(f"<div style='text-align:center; color:#aaa; font-size:0.9rem; margin-top:8px;'>Provide <b>{st.session_state.current_roll}</b> {word_choice} for:</div>", unsafe_allow_html=True)
+                st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{task_text}</div>", unsafe_allow_html=True)
+
+            st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
@@ -205,7 +206,7 @@ else:
                 st.session_state.rolled = False
                 st.rerun()
 
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
         if not st.session_state.confirm_reset:
             if st.button("🚩 End Match", use_container_width=True): st.session_state.confirm_reset = True; st.rerun()
         else:
