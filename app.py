@@ -27,7 +27,7 @@ def clean_text_and_add_flag(text):
             break
     return f"{clean_text}{flag_html}"
 
-# --- 2. CRITERIA POOL ---
+# --- 2. CRITERIA POOLS ---
 CRITERIA_POOL = [
     "Played for both Barcelona & Inter", "Name a Spanish Stadium", "Croatians to win the UCL",
     "Teams with 3+ English 2nd Div Titles", "Brazilians to play for Man City", "Teams currently in the Liga Portugal",
@@ -38,13 +38,25 @@ CRITERIA_POOL = [
     "Scottish players to play in the PL", "Japanese players in the Bundesliga", "Ivorian legends in the Premier League"
 ]
 
+FINAL_CHALLENGES = [
+    "Name 3 winners of the Ballon d'Or who never won the World Cup",
+    "Name 5 clubs that have won the Champions League exactly once",
+    "Name 3 stadiums that have hosted a World Cup Final",
+    "Name 4 players who have scored in two different World Cup Finals",
+    "Name 5 managers who have won the Champions League with two different clubs",
+    "Name 3 players who have won the Premier League with two different clubs",
+    "Name 4 Brazilian players who have won the Ballon d'Or",
+    "Name 5 African nations that have reached a World Cup Quarter-Final"
+]
+
 # --- 3. STATE MANAGEMENT ---
 if 'game_started' not in st.session_state:
     st.session_state.update({
         'game_started': False, 'grid_size': 4, 'max_dice': 3,
         'num_players': 2, 'player_names': [], 'player_data': {},
         'turn': 0, 'rolled': False, 'current_roll': 0, 
-        'grid_map': [], 'confirm_reset': False, 'winner': None
+        'grid_map': [], 'confirm_reset': False, 'winner': None,
+        'active_final_task': None
     })
 
 def start_game():
@@ -69,7 +81,6 @@ def start_game():
 # --- 4. UI ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
-# CHECK FOR WINNER FIRST
 if st.session_state.winner:
     st.balloons()
     st.markdown(f"""
@@ -122,19 +133,40 @@ else:
     with st.sidebar:
         st.markdown(f"<h2 style='text-align:center; color:{player['color']};'>{player['name']}</h2>", unsafe_allow_html=True)
         
-        is_trivia_sq = player['pos'] != 0 and player['pos'] != (len(st.session_state.grid_map) - 1)
+        last_sq_index = len(st.session_state.grid_map) - 1
 
         if not st.session_state.rolled:
             if st.button("🎲 ROLL DICE", use_container_width=True, type="primary"):
                 st.session_state.current_roll = random.randint(1, st.session_state.max_dice)
-                new_pos = min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
+                new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 player['prev'], player['pos'] = player['pos'], new_pos
+                
+                # If landing on final whistle, generate a new random challenge
+                if player['pos'] == last_sq_index:
+                    st.session_state.active_final_task = random.choice(FINAL_CHALLENGES)
+                
                 st.session_state.rolled = True
                 st.rerun()
         else:
             st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
             
-            if is_trivia_sq:
+            # --- FINAL WHISTLE LOGIC ---
+            if player['pos'] == last_sq_index:
+                st.warning("🥅 GOAL LINE CHALLENGE!")
+                st.markdown(f"<p style='text-align:center; font-size:1.1rem;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                
+                c1, c2 = st.columns(2)
+                if c1.button("🎯 Scored!", use_container_width=True):
+                    st.session_state.winner = player
+                    st.rerun()
+                if c2.button("🚫 Missed", use_container_width=True):
+                    player['pos'] = player['prev'] # Send back
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
+                    st.rerun()
+            
+            # --- NORMAL TRIVIA LOGIC ---
+            elif player['pos'] != 0:
                 st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("✅ Success", use_container_width=True):
@@ -146,29 +178,15 @@ else:
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                     st.session_state.rolled = False
                     st.rerun()
+            
+            # --- KICK OFF LOGIC ---
             else:
-                # Landed on Final Whistle
-                if player['pos'] == len(st.session_state.grid_map) - 1:
-                    st.session_state.winner = player
+                if st.button("End Turn", use_container_width=True):
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
                     st.rerun()
-                else: # Kick off (only possible if rolling 0 or logic error, but safe to have)
-                    if st.button("End Turn", use_container_width=True):
-                        st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                        st.session_state.rolled = False
-                        st.rerun()
 
         st.markdown("---")
-        if not st.session_state.confirm_reset:
-            if st.button("🚩 End Match", use_container_width=True):
-                st.session_state.confirm_reset = True
-                st.rerun()
-        else:
-            st.warning("Confirm Quit?")
-            ry, rn = st.columns(2)
-            if ry.button("Yes", use_container_width=True, type="primary"):
-                st.session_state.game_started = False
-                st.session_state.confirm_reset = False
-                st.rerun()
-            if rn.button("No", use_container_width=True):
-                st.session_state.confirm_reset = False
-                st.rerun()
+        if st.button("🚩 End Match", use_container_width=True):
+            st.session_state.game_started = False
+            st.rerun()
