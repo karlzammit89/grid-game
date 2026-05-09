@@ -35,8 +35,12 @@ KIT_COLOR_MAP = {
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
+    # Check for trophy questions first to prioritize the trophy emoji
+    if "🏆" in text:
+        assets["emojis"].append("🏆")
     if "stadium" in text.lower():
         assets["emojis"].append("🏟️")
+        
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -45,6 +49,7 @@ def get_assets(text):
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
+                
     search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
                    "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
                    "Argentina": "ar", "Mexico": "mx"}
@@ -52,6 +57,7 @@ def get_assets(text):
         if word.lower() in clean_text_via_regex(text).lower():
             assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
             break
+            
     for color, emoji in KIT_COLOR_MAP.items():
         if color.lower() in text.lower():
             assets["emojis"].append(emoji)
@@ -63,7 +69,8 @@ def clean_text_via_regex(text):
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
     html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
-    for e in assets["emojis"]:
+    # Use a set to avoid duplicate emojis (like double trophies)
+    for e in list(dict.fromkeys(assets["emojis"])):
         html += f'<span style="font-size:{size_emojis};">{e}</span>'
     for f in assets["flags"]:
         html += f'<img src="{f}" style="height:16px; border-radius:2px; border:1px solid #444;">'
@@ -78,16 +85,23 @@ def generate_random_task():
     nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
     manager_clubs = ['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan', 'Man Utd', 'Liverpool', 'AC Milan']
+    
+    trophies = ["the Champions League", "the World Cup", "the FA Cup", "the Premier League", "the Euros", "the Copa America"]
+    
     nation = random.choice(nations)
     article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
     pair = random.sample(clubs_list, 2)
+    
     templates = [
         lambda: f"Name a player who played for both {pair[0]} & {pair[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
-        lambda: f"Name {article} {nation} player who has played in the Champions League",
+        lambda: f"Name {article} {nation} player who has played in {random.choice(trophies)}",
         lambda: f"Name a manager who managed {random.choice(manager_clubs)}",
         lambda: f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}",
-        lambda: f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
+        lambda: f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}",
+        # Trophy specific questions
+        lambda: f"🏆 Name a player who has won {random.choice(trophies)}",
+        lambda: f"🏆 Name a team that has won {random.choice(trophies)}"
     ]
     return random.choice(templates)()
 
@@ -112,6 +126,7 @@ def start_game():
     unique_tasks = set()
     while len(unique_tasks) < (total_sq - 2):
         new_task = generate_random_task()
+        # Normalize "both" tasks for uniqueness
         if "both" in new_task:
             parts = new_task.split("both ")[1].split(" & ")
             new_task = f"Name a player who played for both {min(parts)} & {max(parts)}"
@@ -165,7 +180,9 @@ else:
     for i, item in enumerate(st.session_state.grid_map):
         active = "active-sq" if i == player['pos'] else ""
         marks = "".join([f'<span class="p-tag" style="background:{p["color"]}">{p["initials"]}</span>' for pid, p in st.session_state.player_data.items() if p['pos'] == i])
-        grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>{format_header_icons(item["assets"])}<div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{item["task"]}</div><div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
+        # Clean text for board display (remove the emoji used for asset logic)
+        display_task = item["task"].replace("🏆 ", "")
+        grid_html += f'<div class="grid-item {active}"><div style="width:100%; color:#555; font-size:0.7rem; text-align:left;">#{i:02}</div>{format_header_icons(item["assets"])}<div style="color:#eee; font-weight:600; font-size:0.85rem; line-height:1.2;">{display_task}</div><div style="min-height:35px; display:flex; justify-content:center; align-items:center;">{marks}</div></div>'
     st.markdown(grid_html + "</div>", unsafe_allow_html=True)
 
     with st.sidebar:
@@ -184,7 +201,10 @@ else:
             st.markdown(f"<div style='text-align:center; font-size:3rem; font-weight:800; margin-bottom:5px;'>🎲 {st.session_state.current_roll}</div>", unsafe_allow_html=True)
             
             current_assets = st.session_state.active_final_task['assets'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['assets']
-            task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
+            raw_task_text = st.session_state.active_final_task['text'] if player['pos'] == len(st.session_state.grid_map)-1 else st.session_state.grid_map[player['pos']]['task']
+            
+            # Remove helper emoji from display text
+            display_task_text = raw_task_text.replace("🏆 ", "")
             
             # Singular/Plural logic
             word_choice = "answer" if st.session_state.current_roll == 1 else "answers"
@@ -192,13 +212,16 @@ else:
             with st.container(border=True):
                 st.markdown(f"<div style='text-align:center; color:#aaa; font-size:0.9rem; margin-top:8px;'>Provide <b>{st.session_state.current_roll}</b> {word_choice} for:</div>", unsafe_allow_html=True)
                 st.markdown(format_header_icons(current_assets, size_logos="30px", size_emojis="26px"), unsafe_allow_html=True)
-                st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{task_text}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.1rem; font-style:italic; font-weight:600; padding: 5px 15px 20px 15px; color:#fff; line-height:1.3;'>{display_task_text}</div>", unsafe_allow_html=True)
 
             st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             if c1.button("✅ Success", use_container_width=True):
-                st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
-                st.session_state.rolled = False
+                if player['pos'] == len(st.session_state.grid_map) - 1:
+                    st.session_state.winner = player
+                else:
+                    st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
+                    st.session_state.rolled = False
                 st.rerun()
             if c2.button("❌ Fail", use_container_width=True):
                 player['pos'] = player['prev']
