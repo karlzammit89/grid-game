@@ -389,26 +389,6 @@ else:
                 ans_result = get_answer_logic(task_text)
                 st.markdown(ans_result)
                 # Note: All <a> tags and button blocks have been removed from this section.
-                
-                # 2. Keep your original Search link as a backup
-                search_query = task_text.replace("Name a", "").strip()
-                st.markdown(f"""
-                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555; margin-top:10px;">
-                        🔍 Search for Verified Answers
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
-                
-                # Link for all questions
-                search_query = task_text.replace("Name a", "").strip()
-                st.markdown(f"""
-                <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-                    <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555;">
-                        🔍 Search for Answers
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
