@@ -32,12 +32,12 @@ KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
 }
 
-# Smart Statistical Thresholds (N+)
+# Smart Statistical Thresholds (N+) - Adjusted for Medium Difficulty
 STAT_THRESHOLDS = {
-    "Goals": {"Global": [100, 200, 500], "CL": [30, 50], "League": [50, 100]},
-    "Assists": {"Global": [100, 150, 200], "League": [50, 100]},
-    "Clean Sheets": {"Global": [100, 150, 200], "League": [50, 100]},
-    "Bookings": {"Global": [50, 100, 150]}
+    "Goals": {"Global": [100, 200], "CL": [20, 30], "League": [50, 75]},
+    "Assists": {"Global": [50, 100], "League": [25, 50]},
+    "Clean Sheets": {"Global": [50, 100], "League": [30, 50]},
+    "Bookings": {"Global": [40, 70, 100]}
 }
 
 TROPHY_WINNERS = {
@@ -51,7 +51,6 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
 def articulate_task(subject_type, target, action="played for"):
-    """Handles 'a/an' logic and 'the' prefixing"""
     article = "an" if subject_type[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
     needs_the = ["Premier League", "Championship", "FA Cup", "Champions League", 
                  "Europa League", "World Cup", "Euros", "Copa America", 
@@ -69,8 +68,12 @@ def get_assets(text):
     
     if "won" in clean_text:
         assets["emojis"].append("🏆")
-    if any(stat in clean_text for stat in ["goals", "assists", "career", "stats", "sheets", "bookings"]):
-        assets["emojis"].append("📊") #
+    
+    # Statistical Emojis Mapping
+    if "goals" in clean_text: assets["emojis"].append("🥅")
+    if "assists" in clean_text: assets["emojis"].append("👟")
+    if "clean sheets" in clean_text: assets["emojis"].append("🧤")
+    if "bookings" in clean_text: assets["emojis"].append("😵")
 
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
@@ -122,9 +125,8 @@ def generate_random_task():
     clubs_list = list(ESPN_LOGOS.keys())
     leagues_comps = ["Champions League", "Europa League", "World Cup", "FA Cup", "Premier League", "Championship", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
-    template_type = random.randint(1, 11) #
+    template_type = random.randint(1, 11)
     
-    # New N+ Stat Templates
     if template_type == 10:
         stat = random.choice(list(STAT_THRESHOLDS.keys()))
         scope = random.choice(["Global", "League", "CL"]) if stat != "Bookings" else "Global"
@@ -139,15 +141,15 @@ def generate_random_task():
             return f"Name a player who has {n_value}+ {stat.lower()} in {target}"
 
     elif template_type == 11:
+        # Adjusted Nationality combinations for Medium difficulty
         nation = random.choice(["English", "Spanish", "French", "Brazilian", "Argentinian", "German"])
         stat = "Goals"
-        n_value = 100
+        n_value = 50 # Lowered from 100 to ensure more possible answers
         comp = random.choice(["Premier League", "La Liga", "Bundesliga"])
         article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
         target = f"the {comp}" if comp == "Premier League" else comp
         return f"Name {article} {nation} player who has {n_value}+ {stat.lower()} in {target}"
 
-    # Original Templates
     elif template_type == 1: 
         pair = random.sample(clubs_list, 2)
         return f"Name a player who played for both {pair[0]} & {pair[1]}"
