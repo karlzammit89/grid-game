@@ -26,10 +26,15 @@ ESPN_LOGOS = {
     "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
 
-# New Data for your requested templates
 STADIUM_COUNTRIES = ["England", "Spain", "Germany", "Italy", "France", "Portugal", "Brazil", "Argentina", "Mexico"]
 
-KIT_COLORS = ["Red", "Blue", "White", "Yellow", "Black & White"]
+KIT_COLOR_MAP = {
+    "Red": "🔴",
+    "Blue": "🔵",
+    "White": "⚪",
+    "Yellow": "🟡",
+    "Black & White": "🏁"
+}
 
 def get_club_logo_html(text):
     html = ""
@@ -47,7 +52,15 @@ def get_club_logo_html(text):
 def clean_text_and_add_assets(text):
     clean_text = text.strip()
     flag_html = ""
-    # Add flag if country name or nationality is in text
+    emoji_html = ""
+    
+    # Check for Kit Colors and add emoji
+    for color, emoji in KIT_COLOR_MAP.items():
+        if color.lower() in clean_text.lower():
+            emoji_html = f'<span style="margin-left:6px; font-size:16px;">{emoji}</span>'
+            break
+
+    # Check for flags
     search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
                    "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
                    "Argentina": "ar", "Mexico": "mx"}
@@ -57,8 +70,9 @@ def clean_text_and_add_assets(text):
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             flag_html = f'<img src="{flag_url}" style="height:14px; vertical-align:middle; margin-left:6px; border-radius:2px; border:1px solid #444;">'
             break
+            
     logo_html = get_club_logo_html(clean_text)
-    return f"{clean_text} {logo_html}{flag_html}"
+    return f"{clean_text} {logo_html}{flag_html}{emoji_html}"
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
@@ -75,9 +89,8 @@ def generate_random_task():
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])} player who played for {random.choice(clubs_list)}",
         lambda: f"Name {article} {nation} player who has played in the Champions League",
         lambda: f"Name a manager who managed {random.choice(manager_clubs)}",
-        # NEW TEMPLATES
         lambda: f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}",
-        lambda: f"Name a football team whose primary home kit color is {random.choice(KIT_COLORS)}"
+        lambda: f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
     ]
     return random.choice(templates)()
 
@@ -183,7 +196,7 @@ else:
             st.markdown(f"<div style='text-align:center; font-size:4rem; font-weight:800;'>{st.session_state.current_roll}</div>", unsafe_allow_html=True)
             if player['pos'] == last_sq_index:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</div>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
@@ -194,7 +207,7 @@ else:
                     st.session_state.rolled = False
                     st.rerun()
             elif player['pos'] != 0:
-                st.markdown(f"<p style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</p>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center;'><b>Provide {st.session_state.current_roll} answers for:</b><br>{st.session_state.grid_map[player['pos']]['task']}</div>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("✅ Success", use_container_width=True):
                     st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
