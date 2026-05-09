@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 
-# --- 1. DATA MAPPING (Flags & Hunter.io 2026 Domains) ---
+# --- 1. DATA MAPPING (Flags & ESPN Logo IDs) ---
 COUNTRY_DATA = {
     "Spanish": "es", "Spain": "es", "English": "gb-eng", "England": "gb-eng",
     "Italian": "it", "Italy": "it", "German": "de", "Germany": "de",
@@ -11,28 +11,26 @@ COUNTRY_DATA = {
     "Argentinian": "ar", "Argentina": "ar"
 }
 
-# Domain mapping for Hunter.io Logo API
-CLUB_DOMAINS = {
-    "Real Madrid": "realmadrid.com", "Barcelona": "fcbarcelona.com",
-    "Man Utd": "manutd.com", "Manchester United": "manutd.com",
-    "Liverpool": "liverpoolfc.com", "Bayern Munich": "fcbayern.com",
-    "AC Milan": "acmilan.com", "Juventus": "juventus.com",
-    "Chelsea": "chelseafc.com", "Inter Milan": "inter.it",
-    "PSG": "psg.fr", "Arsenal": "arsenal.com", "Man City": "mancity.com"
+# ESPN Permanent Team IDs for high-res logos
+ESPN_LOGOS = {
+    "Real Madrid": "86", "Barcelona": "83", "Man Utd": "360", 
+    "Manchester United": "360", "Liverpool": "364", "Bayern Munich": "132",
+    "AC Milan": "103", "Juventus": "111", "Chelsea": "363", 
+    "Inter Milan": "110", "PSG": "160", "Arsenal": "359", "Man City": "382"
 }
 
 def get_club_logo(text):
-    """Fetches badges via Hunter.io 2026 direct endpoint."""
+    """Fetches high-quality badges from ESPN's production CDN."""
     logo_html = ""
-    for club, domain in CLUB_DOMAINS.items():
+    for club, espn_id in ESPN_LOGOS.items():
         if club.lower() in text.lower():
-            # Correct 2026 Hunter.io URL format: logos.hunter.io/{domain}
-            url = f"https://logos.hunter.io/{domain}"
-            logo_html += f'<img src="{url}" style="height:24px; vertical-align:middle; margin-right:8px;">'
+            # ESPN CDN URL format for transparent PNGs
+            url = f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png"
+            logo_html += f'<img src="{url}" style="height:28px; vertical-align:middle; margin-right:8px;">'
     return logo_html
 
 def clean_text_and_add_assets(text):
-    """Adds assets using the fixed Hunter.io 2026 endpoint."""
+    """Injects ESPN logos and country flags into task text."""
     clean_text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
     # Flags logic
@@ -48,7 +46,7 @@ def clean_text_and_add_assets(text):
 
 # --- 2. LOGIC GENERATORS ---
 def generate_final_challenge():
-    big_clubs = list(CLUB_DOMAINS.keys())
+    big_clubs = list(ESPN_LOGOS.keys())
     nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
     leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
@@ -93,10 +91,10 @@ if 'game_started' not in st.session_state:
     })
 
 def start_game():
-    # Square the grid size (4x4 = 16, 5x5 = 25)
+    # Dynamic Grid Calculation (4x4, 5x5, etc.)
     total_sq = st.session_state.grid_size ** 2
     board = [{"task": "KICK OFF"}]
-    selected_tasks = random.sample(CRITERIA_POOL * 3, total_sq - 2) # Multiply pool to ensure enough tasks
+    selected_tasks = random.sample(CRITERIA_POOL * 5, total_sq - 2)
     for task in selected_tasks:
         board.append({"task": clean_text_and_add_assets(task)})
     board.append({"task": "FINAL WHISTLE"})
@@ -134,7 +132,7 @@ elif not st.session_state.game_started:
 
 else:
     player = st.session_state.player_data[st.session_state.turn]
-    # DYNAMIC GRID CSS: Uses the grid_size to set columns
+    # DYNAMIC GRID CSS: Uses the grid_size to force even columns
     st.markdown(f"""
         <style>
         .grid-container {{ 
