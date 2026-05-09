@@ -1,8 +1,19 @@
 import streamlit as st
 import random
 import re
+import pandas as pd
 
 # --- 1. DATA MAPPING ---
+# IDs added for the lookup engine to work with specific clubs
+CLUB_IDS = {
+    "Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", 
+    "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Tottenham": "3ad23a75",
+    "Aston Villa": "860223d1", "Newcastle": "b1b71fcb", "Real Madrid": "5324c30a", 
+    "Barcelona": "206d9d25", "Atletico Madrid": "db3b5483", "Sevilla": "ad2be748",
+    "AC Milan": "e2d42690", "Juventus": "e2d42690", "Inter Milan": "d60ad303",
+    "Bayern Munich": "054fdde2", "PSG": "e2d8892c"
+}
+
 COUNTRY_DATA = {
     "French": "fr", "Spanish": "es", "English": "gb-eng", "Portuguese": "pt",
     "Dutch": "nl", "Belgian": "be", "German": "de", "Italian": "it",
@@ -27,10 +38,7 @@ ESPN_LOGOS = {
 }
 
 STADIUM_COUNTRIES = {"England": "gb-eng", "Spain": "es", "Germany": "de", "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", "Argentina": "ar", "Mexico": "mx"}
-
-KIT_COLOR_MAP = {
-    "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
-}
+KIT_COLOR_MAP = {"Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"}
 
 STAT_THRESHOLDS = {
     "Goals": {"Global": [100, 200], "CL": [20, 30], "League": [50, 75]},
@@ -48,7 +56,21 @@ TROPHY_WINNERS = {
 EUROPEANS = [k for k, v in COUNTRY_DATA.items() if v in ["fr", "es", "gb-eng", "pt", "nl", "be", "de", "it", "hr", "ch", "dk", "tr", "at", "ua", "gb-sct", "se", "gb-wls", "pl", "no"]]
 SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuadorian"]
 
-# --- 2. GRAMMAR & ASSET ENGINES ---
+# --- 2. LIVE ANSWER ENGINE ---
+@st.cache_data(show_spinner=False)
+def fetch_shared_players(club1, club2):
+    id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
+    if not id1 or not id2: return []
+    try:
+        url = f"https://fbref.com/en/friv/players-who-played-for-multiple-clubs-countries.fcgi?t1={id1}&t2={id2}"
+        storage_options = {'User-Agent': 'Mozilla/5.0'}
+        tables = pd.read_html(url, storage_options=storage_options)
+        if tables:
+            return tables[0]['Player'].dropna().unique().tolist()
+    except: return []
+    return []
+
+# --- 3. GRAMMAR & ASSET ENGINES ---
 def grid_text_formatter(text):
     text = text.replace("Name a football team whose", "Football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
@@ -70,8 +92,6 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
-    text = text.replace("players who has", "players who have")
-    text = text.replace("teams that has", "teams that have")
     return text
 
 def articulate_task(subject_type, target, action="played for"):
@@ -128,7 +148,7 @@ def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
         return html + f'<span style="font-size:{size_emojis};">⚽</span></div>'
     return html + '</div>'
 
-# --- 3. DYNAMIC LOGIC ---
+# --- 4. DYNAMIC LOGIC ---
 def generate_random_task(categories):
     all_nations = list(COUNTRY_DATA.keys())
     clubs_list = list(ESPN_LOGOS.keys())
@@ -182,7 +202,7 @@ def generate_random_task(categories):
         nation = random.choice(EUROPEANS if comp == "Euros" else SOUTH_AMERICANS if comp == "Copa America" else all_nations)
         return articulate_task(nation, comp, action="has played in")
 
-# --- 4. STATE MANAGEMENT ---
+# --- 5. STATE MANAGEMENT ---
 def reset_all_data():
     for key in list(st.session_state.keys()): del st.session_state[key]
     st.rerun()
@@ -220,7 +240,7 @@ def start_game():
     st.session_state.game_started = True
     return True
 
-# --- 5. UI ---
+# --- 6. UI ---
 st.set_page_config(page_title="Football Path Trivia", layout="wide")
 
 if st.session_state.winner:
@@ -300,6 +320,16 @@ else:
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
+
+            # --- ANSWERS DROPDOWN (ONLY ADDED CONTENT) ---
+            if "both" in task_text.lower():
+                match = re.search(r"both (.*?) & (.*)", task_text)
+                if match:
+                    c1_name, c2_name = match.group(1).strip(), match.group(2).strip()
+                    ans_list = fetch_shared_players(c1_name, c2_name)
+                    with st.expander(f"👁️ View Answers ({len(ans_list)})"):
+                        if ans_list: st.write(", ".join(ans_list))
+                        else: st.write("Searching database...")
 
         st.markdown("---")
         if not st.session_state.confirm_reset:
