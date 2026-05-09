@@ -1,3 +1,4 @@
 streamlit
-ScraperFC
 pandas
+lxml
+html5lib
