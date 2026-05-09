@@ -53,22 +53,25 @@ def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
     clean_text = clean_text_via_regex(text).lower()
     
+    # Strict 🏆 Logic: Only if "won" is in the text
     if "won" in clean_text:
         assets["emojis"].append("🏆")
 
+    # Flag Logic: Scan for competitions and nationalities
     for comp, geo in COMPETITION_GEOGRAPHY.items():
         if comp.lower() in clean_text:
-            if geo == "world":
-                if "🌍" not in assets["emojis"]: assets["emojis"].append("🌍")
-            else:
+            # Geography flags added (except for "world" which had the emoji removed)
+            if geo != "world":
                 flag_url = f"https://flagcdn.com/w40/{geo}.png"
                 if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
+    # Scan for Nationalities to add flags (e.g., Nigerian flag for "Nigerian player")
     for nation, iso in COUNTRY_DATA.items():
         if nation.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
             if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
+    # Scan for Stadium Countries
     for s_country, iso in STADIUM_COUNTRIES.items():
         if s_country.lower() in clean_text:
             flag_url = f"https://flagcdn.com/w40/{iso}.png"
@@ -76,6 +79,7 @@ def get_assets(text):
 
     if "stadium" in clean_text: assets["emojis"].append("🏟️")
         
+    # Logo Logic
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
@@ -143,9 +147,8 @@ def generate_random_task():
         article = "an" if valid_nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
         return f"Name {article} {valid_nation} player who has won the {comp}"
     else:
-        # GEOGRAPHIC SMART MAPPING for "Played In" tasks
+        # GEOGRAPHIC SMART MAPPING
         comp = random.choice(global_comps + ["Euros", "Copa America"])
-        
         if comp == "Euros":
             nation = random.choice(EUROPEANS)
         elif comp == "Copa America":
