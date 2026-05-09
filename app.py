@@ -55,8 +55,11 @@ def grid_text_formatter(text):
     text = re.sub(r"Name a team", "Teams", text)
     text = re.sub(r"Name a stadium", "Stadiums", text)
     text = re.sub(r"Name a manager", "Managers", text)
+    # Correcting grammar for plural grid labels
     text = text.replace("players who has", "players who have")
     text = text.replace("Players who has", "Players who have")
+    text = text.replace("teams that has", "teams that have")
+    text = text.replace("Teams that has", "Teams that have")
     return text
 
 def smart_pluralize(text, count):
@@ -67,7 +70,9 @@ def smart_pluralize(text, count):
     text = re.sub(r"Name a team", f"Name {count} teams", text)
     text = re.sub(r"Name a stadium", f"Name {count} stadiums", text)
     text = re.sub(r"Name a manager", f"Name {count} managers", text)
+    # Correcting grammar for plural counts in sidebar
     text = text.replace("players who has", "players who have")
+    text = text.replace("teams that has", "teams that have")
     return text
 
 def articulate_task(subject_type, target, action="played for"):
@@ -272,7 +277,6 @@ else:
                 st.markdown(f"<div style='text-align:center; font-size:1.5rem; font-weight:800; color:#FFD700; margin-bottom:10px;'>⭐⭐ BONUS QUESTION ⭐⭐</div>", unsafe_allow_html=True)
                 task_text = st.session_state.active_final_task['text']
                 current_assets = st.session_state.active_final_task['assets']
-                # Determine hardcoded count for bonus
                 bonus_count = 5 if any(x in task_text.lower() for x in ["player who played", "stadium", "team whose", "team that has won"]) else 3
                 display_text = smart_pluralize(task_text, bonus_count)
             else:
