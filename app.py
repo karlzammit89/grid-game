@@ -26,22 +26,42 @@ def clean_text_and_add_flag(text):
             break
     return f"{clean_text}{flag_html}"
 
-# --- 2. INFINITE QUESTION GENERATOR ---
+# --- 2. STRUCTURED LOGIC GENERATOR ---
 def generate_final_challenge():
-    """Generates a unique high-difficulty question using templates."""
-    counts = ["3", "4", "5"]
-    subjects = ["players", "clubs", "managers", "stadiums", "nations"]
+    """Generates a logic-checked high-difficulty question."""
+    
+    # Pools of logical data
+    big_clubs = ["Real Madrid", "Barcelona", "Man Utd", "Liverpool", "Bayern Munich", "AC Milan", "Juventus", "Chelsea", "Inter Milan", "PSG", "Arsenal", "Man City"]
+    nations = ["Brazil", "France", "Spain", "Germany", "Argentina", "Portugal", "Italy", "Netherlands", "England", "Belgium"]
+    leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
     
     templates = [
-        f"Name {random.choice(counts)} {random.choice(subjects)} that have won both the {random.choice(['Champions League', 'World Cup', 'Domestic League'])} and {random.choice(['another major trophy', 'a continental cup', 'a secondary cup'])}.",
-        f"Name {random.choice(counts)} {random.choice(['Brazilian', 'French', 'Spanish', 'German', 'Argentinian'])} {random.choice(['players', 'managers'])} who have won the {random.choice(['Champions League', 'Premier League', 'La Liga', 'Serie A'])}.",
-        f"Name {random.choice(counts)} {random.choice(['London', 'Madrid', 'Milan', 'Manchester', 'Lisbon'])} based clubs that have played in {random.choice(['European competitions', 'top flight finals', 'relegation playoffs'])}.",
-        f"Name {random.choice(counts)} players who have played for {random.choice(['Real Madrid', 'Barcelona', 'Bayern', 'Man Utd'])} and {random.choice(['AC Milan', 'Juventus', 'PSG', 'Chelsea'])}.",
-        f"Name {random.choice(counts)} {random.choice(subjects)} that have achieved {random.choice(['a league & cup double', 'a treble', 'back-to-back titles', 'unbeaten runs'])}.",
-        f"Name {random.choice(counts)} players who have scored {random.choice(['in a World Cup final', 'a UCL hat-trick', '100+ league goals', 'for 3 different top clubs'])}.",
-        f"Name {random.choice(counts)} {random.choice(['African', 'South American', 'European'])} nations that have {random.choice(['reached a WC Semi-final', 'won their continental cup', 'beaten a top 10 ranked team'])}."
+        # Player Transfer Logic
+        lambda: f"Name 3 players who have played for both {random.choice(big_clubs)} and {random.choice([c for c in big_clubs if c != 'Real Madrid'])}.",
+        
+        # Nationality & League Logic
+        lambda: f"Name 4 {random.choice(nations)}n players who have won the {random.choice(leagues)}.",
+        
+        # National Team Achievement
+        lambda: f"Name 3 nations that have won {random.choice(['the World Cup', 'their Continental Cup (Euro/AFCON/etc)', 'the Confederations Cup'])} at least twice.",
+        
+        # Manager Logic
+        lambda: f"Name 3 managers who have won the {random.choice(['Champions League', 'Premier League', 'World Cup', 'La Liga'])}.",
+        
+        # Club Achievement Logic
+        lambda: f"Name 4 clubs that have won the {random.choice(['Champions League', 'Europa League', 'Cup Winners Cup'])} at least once.",
+        
+        # City/Stadium Logic (Simplified to ensure existence)
+        lambda: f"Name 3 stadiums located in {random.choice(['London', 'Madrid', 'Paris', 'Manchester', 'Lisbon', 'Rio de Janeiro'])}.",
+        
+        # Stat-based Logic
+        lambda: f"Name 4 players who have scored {random.choice(['a hat-trick in the UCL', 'in a World Cup Final', '50+ goals for their country', 'over 150 Premier League goals'])}.",
+        
+        # Multi-Title Winners
+        lambda: f"Name 3 players who have won the {random.choice(['Champions League', 'World Cup'])} with two different {random.choice(['clubs', 'nationalities (if dual)'] if 'World Cup' not in _ else ['clubs'])}."
     ]
-    return random.choice(templates)
+    
+    return random.choice(templates)()
 
 CRITERIA_POOL = [
     "Name a player who has played for both Real Madrid & AC Milan",
@@ -156,7 +176,7 @@ else:
                 new_pos = min(player['pos'] + st.session_state.current_roll, last_sq_index)
                 player['prev'], player['pos'] = player['pos'], new_pos
                 
-                # Dynamic Question Generation if they land on final whistle
+                # Logic-checked generation
                 if player['pos'] == last_sq_index:
                     st.session_state.active_final_task = generate_final_challenge()
                 
@@ -167,7 +187,7 @@ else:
             
             if player['pos'] == last_sq_index:
                 st.warning("🥅 GOAL LINE CHALLENGE!")
-                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:10px; border-radius:10px;'>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align:center; font-size:1.1rem; border:1px solid #555; padding:15px; border-radius:10px;'><b>FINAL TASK:</b><br>{st.session_state.active_final_task}</p>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("🎯 Scored!", use_container_width=True):
                     st.session_state.winner = player
