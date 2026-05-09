@@ -32,6 +32,7 @@ if 'game_started' not in st.session_state:
     st.session_state.rolled = False
     st.session_state.current_roll = 0
     st.session_state.grid_map = []
+    st.session_state.confirm_reset = False
 
 def start_game():
     total_squares = st.session_state.grid_size ** 2
@@ -73,9 +74,20 @@ else:
     player_id = st.session_state.turn
     player = st.session_state.player_data[player_id]
     
-    # CSS for Grid & Circles
+    # CSS for Grid, Circles, and Button Neutrality
     styles = "".join([f".p-tag-{i} {{ background: {PLAYER_COLORS[i]}; color: white; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; margin: 2px; border: 1px solid rgba(255,255,255,0.3); }}" for i in range(4)])
-    st.markdown(f"<style>.grid-container {{ display: grid; gap: 12px; margin-bottom: 20px; }}.grid-item {{ border: 1px solid #333; border-radius: 12px; padding: 15px; text-align: center; background: #0e1117; min-height: 100px; }}.active-sq {{ border: 2px solid {player['color']} !important; box-shadow: 0 0 15px {player['color']}44; }}{styles}</style>", unsafe_allow_html=True)
+    st.markdown(f"""
+        <style>
+        .grid-container {{ display: grid; gap: 12px; margin-bottom: 20px; }}
+        .grid-item {{ border: 1px solid #333; border-radius: 12px; padding: 15px; text-align: center; background: #0e1117; min-height: 100px; }}
+        .active-sq {{ border: 2px solid {player['color']} !important; box-shadow: 0 0 15px {player['color']}44; }}
+        {styles}
+        /* Make secondary buttons blend in */
+        div.stButton > button {{
+            background-color: transparent;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
 
     # Board Display
     cols = st.session_state.grid_size
@@ -95,7 +107,7 @@ else:
             if not st.session_state.rolled:
                 if st.button(f"🎲 ROLL DICE", use_container_width=True, type="primary"):
                     with st.spinner("🎲 Rolling..."):
-                        time.sleep(1.2) # Animation delay
+                        time.sleep(1.2)
                     st.session_state.current_roll = random.randint(1, 3)
                     player['prev'] = player['pos']
                     player['pos'] = min(player['pos'] + st.session_state.current_roll, len(st.session_state.grid_map)-1)
@@ -106,21 +118,36 @@ else:
                 st.markdown(f"<p style='text-align: center;'>Provide <b>{st.session_state.current_roll}</b> answers!</p>", unsafe_allow_html=True)
 
         if st.session_state.rolled:
-            st.markdown("### 📢 Judge's Verdict")
+            st.markdown("### 📢 Referee's Decision")
             c_yes, c_no = st.columns(2)
-            if c_yes.button("✅ Correct", use_container_width=True, type="primary"):
+            # Using type="secondary" (default) ensures no highlight until hover
+            if c_yes.button("Correct", use_container_width=True):
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
-            if c_no.button("❌ Wrong", use_container_width=True):
+            if c_no.button("Wrong", use_container_width=True):
                 player['pos'] = player['prev']
                 st.session_state.turn = (st.session_state.turn + 1) % st.session_state.num_players
                 st.session_state.rolled = False
                 st.rerun()
 
-        if st.button("🚩 End Session", use_container_width=True):
-            st.session_state.game_started = False
-            st.rerun()
+        # Restart Logic with Confirmation
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        if not st.session_state.confirm_reset:
+            if st.button("🚩 End Session", use_container_width=True):
+                st.session_state.confirm_reset = True
+                st.rerun()
+        else:
+            with st.container(border=True):
+                st.warning("Confirm End Session?")
+                col_y, col_n = st.columns(2)
+                if col_y.button("Yes", type="primary", use_container_width=True):
+                    st.session_state.game_started = False
+                    st.session_state.confirm_reset = False
+                    st.rerun()
+                if col_n.button("No", use_container_width=True):
+                    st.session_state.confirm_reset = False
+                    st.rerun()
 
     if player['pos'] == len(st.session_state.grid_map) - 1 and not st.session_state.rolled:
         st.balloons()
