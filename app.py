@@ -29,7 +29,6 @@ COUNTRY_DATA = {
     "South Korean": "kr", "South Korea": "kr", "Australian": "au", "Australia": "au"
 }
 
-# ESPN Permanent Team IDs - Updated PSV & Dutch teams
 ESPN_LOGOS = {
     "Man Utd": "360", "Manchester United": "360", "Liverpool": "364", "Arsenal": "359", 
     "Chelsea": "363", "Man City": "382", "Spurs": "367", "Tottenham": "367",
@@ -50,10 +49,8 @@ VALID_CLUB_PAIRS = [
 
 def get_club_logo_html(text):
     html = ""
-    # Sort keys by length descending to prevent 'PSV Eindhoven' being caught by 'PSV' logic first
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
-    
     for club in sorted_clubs:
         if club.lower() in text.lower():
             espn_id = ESPN_LOGOS[club]
@@ -76,10 +73,14 @@ def clean_text_and_add_assets(text):
 
 # --- 2. DYNAMIC LOGIC GENERATORS ---
 def generate_random_task():
+    nation = random.choice(list(COUNTRY_DATA.keys()))
+    # Grammar Check: use 'an' if nation starts with a vowel
+    article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
+    
     templates = [
         lambda: f"Name a player who played for both {random.choice(VALID_CLUB_PAIRS)[0]} & {random.choice(VALID_CLUB_PAIRS)[1]}",
         lambda: f"Name a {random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Turkish'])} player who played for {random.choice(list(ESPN_LOGOS.keys()))}",
-        lambda: f"Name a {random.choice(list(COUNTRY_DATA.keys()))} player who has played in the Champions League",
+        lambda: f"Name {article} {nation} player who has played in the Champions League",
         lambda: f"Name a manager who coached {random.choice(['Real Madrid', 'Chelsea', 'Bayern Munich', 'PSG', 'Juventus', 'Barcelona', 'Inter Milan'])}"
     ]
     return clean_text_and_add_assets(random.choice(templates)())
