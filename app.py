@@ -50,6 +50,8 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 
 # --- 2. GRAMMAR & ASSET ENGINES ---
 def grid_text_formatter(text):
+    # Pluralize kit colors specifically
+    text = text.replace("Name a football team whose", "Football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", r"\1 players", text)
     text = re.sub(r"Name a player", "Players", text)
     text = re.sub(r"Name a team", "Teams", text)
@@ -65,6 +67,7 @@ def grid_text_formatter(text):
 def smart_pluralize(text, count):
     if count <= 1:
         return text
+    text = text.replace("Name a football team whose", f"Name {count} football teams whose")
     text = re.sub(r"Name a[n]? (\w+) player", f"Name {count} \\1 players", text)
     text = re.sub(r"Name a player", f"Name {count} players", text)
     text = re.sub(r"Name a team", f"Name {count} teams", text)
