@@ -26,7 +26,7 @@ ESPN_LOGOS = {
     "Feyenoord": "142", "Benfica": "1929", "Porto": "437", "Sporting CP": "2250"
 }
 
-STADIUM_COUNTRIES = ["England", "Spain", "Germany", "Italy", "France", "Portugal", "Brazil", "Argentina", "Mexico"]
+STADIUM_COUNTRIES = {"England": "gb-eng", "Spain": "es", "Germany": "de", "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", "Argentina": "ar", "Mexico": "mx"}
 
 KIT_COLOR_MAP = {
     "Red": "🔴", "Blue": "🔵", "White": "⚪", "Yellow": "🟡", "Green": "🟢", "Black": "⚫"
@@ -39,7 +39,6 @@ COMPETITION_GEOGRAPHY = {
     "La Liga": "es", "Serie A": "it", "Bundesliga": "de", "Ligue 1": "fr"
 }
 
-# Verified Historical Winners for Smart Mapping
 TROPHY_WINNERS = {
     "Euros": ["French", "Spanish", "Portuguese", "German", "Italian", "Dutch", "Danish"],
     "Copa America": ["Argentinian", "Brazilian", "Uruguayan", "Colombian"],
@@ -52,38 +51,47 @@ SOUTH_AMERICANS = ["Argentinian", "Brazilian", "Colombian", "Uruguayan", "Ecuado
 # --- 2. ASSET ENGINE ---
 def get_assets(text):
     assets = {"logos": [], "flags": [], "emojis": []}
+    clean_text = clean_text_via_regex(text).lower()
     
+    # 🏆 Logic: Only if "won" is in the text
+    if "won" in clean_text:
+        assets["emojis"].append("🏆")
+
+    # Flag Logic: Scan for competitions AND nationalities
     for comp, geo in COMPETITION_GEOGRAPHY.items():
-        if comp.lower() in text.lower():
-            if "🏆" not in assets["emojis"]: assets["emojis"].append("🏆")
+        if comp.lower() in clean_text:
             if geo == "world":
                 if "🌍" not in assets["emojis"]: assets["emojis"].append("🌍")
             else:
-                assets["flags"].append(f"https://flagcdn.com/w40/{geo}.png")
-            break
+                flag_url = f"https://flagcdn.com/w40/{geo}.png"
+                if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
 
-    if "stadium" in text.lower(): assets["emojis"].append("🏟️")
+    # Scan for Nationalities to add secondary/primary flags
+    for nation, iso in COUNTRY_DATA.items():
+        if nation.lower() in clean_text:
+            flag_url = f"https://flagcdn.com/w40/{iso}.png"
+            if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+
+    # Scan for Stadium Countries
+    for s_country, iso in STADIUM_COUNTRIES.items():
+        if s_country.lower() in clean_text:
+            flag_url = f"https://flagcdn.com/w40/{iso}.png"
+            if flag_url not in assets["flags"]: assets["flags"].append(flag_url)
+
+    if "stadium" in clean_text: assets["emojis"].append("🏟️")
         
+    # Logo Logic
     sorted_clubs = sorted(ESPN_LOGOS.keys(), key=len, reverse=True)
     found_ids = set()
     for club in sorted_clubs:
-        if club.lower() in text.lower():
+        if club.lower() in clean_text:
             espn_id = ESPN_LOGOS[club]
             if espn_id not in found_ids:
                 assets["logos"].append(f"https://a.espncdn.com/i/teamlogos/soccer/500/{espn_id}.png")
                 found_ids.add(espn_id)
-                
-    if not assets["flags"]:
-        search_pool = {**COUNTRY_DATA, "England": "gb-eng", "Spain": "es", "Germany": "de", 
-                       "Italy": "it", "France": "fr", "Portugal": "pt", "Brazil": "br", 
-                       "Argentina": "ar", "Mexico": "mx"}
-        for word, iso in search_pool.items():
-            if word.lower() in clean_text_via_regex(text).lower():
-                assets["flags"].append(f"https://flagcdn.com/w40/{iso}.png")
-                break
             
     for color, emoji in KIT_COLOR_MAP.items():
-        if color.lower() in text.lower():
+        if color.lower() in clean_text:
             assets["emojis"].append(emoji)
             break
             
@@ -93,11 +101,11 @@ def clean_text_via_regex(text):
     return re.sub(r'[^\w\s]', '', text)
 
 def format_header_icons(assets, size_logos="24px", size_emojis="22px"):
-    html = '<div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
+    html = '<div style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 25px; margin: 8px 0;">'
     for e in list(dict.fromkeys(assets["emojis"])):
         html += f'<span style="font-size:{size_emojis};">{e}</span>'
     for f in assets["flags"]:
-        html += f'<img src="{f}" style="height:16px; border-radius:2px; border:1px solid #444;">'
+        html += f'<img src="{f}" style="height:14px; border-radius:2px; border:1px solid #444;">'
     for l in assets["logos"]:
         html += f'<img src="{l}" style="height:{size_logos};">'
     if not any(assets.values()):
@@ -113,43 +121,33 @@ def generate_random_task():
     
     template_type = random.randint(1, 9)
     
-    if template_type == 1: # Both Clubs
+    if template_type == 1: 
         pair = random.sample(clubs_list, 2)
         return f"Name a player who played for both {pair[0]} & {pair[1]}"
-    
-    elif template_type == 2: # Nationality + Club
-        n = random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian'])
+    elif template_type == 2:
+        n = random.choice(['Brazilian', 'French', 'Spanish', 'Dutch', 'Argentinian', 'Portuguese', 'German', 'Italian', 'Nigerian'])
         return f"Name a {n} player who played for {random.choice(clubs_list)}"
-    
-    elif template_type == 3: # Manager
+    elif template_type == 3:
         return f"Name a manager who managed {random.choice(manager_clubs)}"
-    
-    elif template_type == 4: # Stadium
-        return f"Name a stadium located in {random.choice(STADIUM_COUNTRIES)}"
-    
-    elif template_type == 5: # Kit
+    elif template_type == 4:
+        s_choice = random.choice(list(STADIUM_COUNTRIES.keys()))
+        return f"Name a stadium located in {s_choice}"
+    elif template_type == 5:
         return f"Name a football team whose primary home kit color is {random.choice(list(KIT_COLOR_MAP.keys()))}"
-    
-    elif template_type == 6: # Team Winner
+    elif template_type == 6:
         comp = random.choice(global_comps + ["Euros", "Copa America"])
         comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
         return f"Name a team that has won {comp_display}"
-
-    elif template_type == 7: # Broad Player Winner
+    elif template_type == 7:
         comp = random.choice(global_comps + ["Euros", "Copa America"])
         comp_display = f"the {comp}" if "League" in comp or "Cup" in comp or comp in ["Euros", "Copa America"] else comp
         return f"Name a player who has won {comp_display}"
-
-    elif template_type == 8: # SMART MAPPED: Nation + Winner (Historical Only)
+    elif template_type == 8:
         comp = random.choice(["Euros", "Copa America", "World Cup", "Champions League", "Europa League"])
-        if comp in TROPHY_WINNERS:
-            valid_nation = random.choice(TROPHY_WINNERS[comp])
-        else:
-            valid_nation = random.choice(EUROPEANS + SOUTH_AMERICANS)
+        valid_nation = random.choice(TROPHY_WINNERS.get(comp, EUROPEANS + SOUTH_AMERICANS))
         article = "an" if valid_nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
         return f"Name {article} {valid_nation} player who has won the {comp}"
-
-    else: # Played In
+    else:
         nation = random.choice(all_nations)
         comp = random.choice(global_comps + ["Euros", "Copa America"])
         article = "an" if nation[0].lower() in ['a', 'e', 'i', 'o', 'u'] else "a"
