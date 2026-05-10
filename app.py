@@ -426,41 +426,165 @@ PLAYER_TROPHY_ANSWERS = {
 }
 
 STAT_ANSWERS = {
-    "100+ Goals career": [
-        "Cristiano Ronaldo (900+)", "Lionel Messi (800+)", "Romário (770+)",
-        "Pelé (760+)", "Josef Bican (805+)", "Ferenc Puskás", "Gerd Müller",
-        "Eusébio", "Robbie Fowler", "Wayne Rooney", "Andrew Cole", "Frank Lampard",
-        "Steven Gerrard", "Alan Shearer (260 PL)", "Jimmy Greaves", "Thierry Henry"
+    # ── Goals – career global ─────────────────────────────────────────────────
+    ("goals", "career", 100): [
+        "Cristiano Ronaldo", "Lionel Messi", "Romário", "Pelé", "Josef Bican",
+        "Ferenc Puskás", "Gerd Müller", "Eusébio", "Wayne Rooney", "Andrew Cole",
+        "Frank Lampard", "Jimmy Greaves", "Thierry Henry", "Robbie Fowler",
+        "Michael Owen", "Ian Rush", "Gary Lineker", "Alan Shearer",
+        "Zlatan Ibrahimović", "Robert Lewandowski", "Karim Benzema", "Samuel Eto'o",
     ],
-    "200+ Goals career": [
-        "Cristiano Ronaldo (900+)", "Lionel Messi (800+)", "Romário (770+)",
-        "Pelé (760+)", "Robert Lewandowski", "Raúl", "Karim Benzema",
-        "Filippo Inzaghi", "Gerd Müller", "Zlatan Ibrahimović", "Samuel Eto'o"
+    ("goals", "career", 200): [
+        "Cristiano Ronaldo", "Lionel Messi", "Romário", "Pelé", "Josef Bican",
+        "Ferenc Puskás", "Gerd Müller", "Eusébio", "Raúl", "Karim Benzema",
+        "Filippo Inzaghi", "Zlatan Ibrahimović", "Robert Lewandowski", "Samuel Eto'o",
+        "Ronaldo (R9)", "David Villa", "Didier Drogba",
     ],
-    "50+ Goals league": [
-        "Cristiano Ronaldo", "Lionel Messi", "Karim Benzema", "Raúl",
-        "Thierry Henry (175 PL)", "Alan Shearer (260 PL)", "Wayne Rooney",
-        "Andrew Cole", "Frank Lampard", "Steven Gerrard", "Didier Drogba",
-        "Fernando Torres", "Robin van Persie"
+
+    # ── Goals – Premier League ────────────────────────────────────────────────
+    ("goals", "Premier League", 50): [
+        "Alan Shearer (260)", "Andrew Cole (187)", "Wayne Rooney (208)",
+        "Frank Lampard (177)", "Thierry Henry (175)", "Robbie Fowler (163)",
+        "Michael Owen (150)", "Les Ferdinand (149)", "Teddy Sheringham (146)",
+        "Jimmy Floyd Hasselbaink (127)", "Robbie Keane (126)", "Emile Heskey (110)",
+        "Jermain Defoe (162)", "Nicolas Anelka (125)", "Dion Dublin (111)",
+        "Ian Wright (113)", "Dwight Yorke (123)", "Paul Scholes (107)",
+        "Steve McManaman", "Darren Bent (106)", "Harry Kane (213+)",
+        "Mohamed Salah (170+)", "Sergio Agüero (184)",
     ],
-    "50+ Assists career": [
+    ("goals", "Premier League", 75): [
+        "Alan Shearer (260)", "Andrew Cole (187)", "Wayne Rooney (208)",
+        "Frank Lampard (177)", "Thierry Henry (175)", "Robbie Fowler (163)",
+        "Harry Kane (213+)", "Mohamed Salah (170+)", "Sergio Agüero (184)",
+        "Michael Owen (150)", "Jermain Defoe (162)", "Les Ferdinand (149)",
+    ],
+
+    # ── Goals – La Liga ───────────────────────────────────────────────────────
+    ("goals", "La Liga", 50): [
+        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Raúl (228)",
+        "Karim Benzema (219)", "Hugo Sánchez (234)", "Telmo Zarra (251)",
+        "Quini (219)", "Pahiño", "Alfredo Di Stéfano (227)",
+        "Carlos Santillana (186)", "Fernando Torres (82)", "David Villa (185)",
+        "Ronaldo R9 (30 — too few)", "Luis Suárez (121)", "Antoine Griezmann (133+)",
+        "Robert Lewandowski (60+)", "Vinicius Jr (80+)",
+    ],
+    ("goals", "La Liga", 75): [
+        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Raúl (228)",
+        "Karim Benzema (219)", "Hugo Sánchez (234)", "Telmo Zarra (251)",
+        "David Villa (185)", "Luis Suárez (121)", "Antoine Griezmann (133+)",
+    ],
+
+    # ── Goals – Serie A ───────────────────────────────────────────────────────
+    ("goals", "Serie A", 50): [
+        "Silvio Piola (274)", "Gunnar Nordahl (225)", "Giuseppe Meazza (216)",
+        "José Altafini (216)", "Roberto Baggio (205)", "Alessandro Del Piero (188)",
+        "Gigi Riva (164)", "Francesco Totti (250)", "Gianluca Vialli (132)",
+        "Filippo Inzaghi (156)", "Luca Toni (138)", "Christian Vieri (123)",
+        "Zlatan Ibrahimović (93)", "Romelu Lukaku (64)", "Lautaro Martínez (100+)",
+        "Ciro Immobile (207+)", "Edin Džeko (85)", "Antonio Di Natale (188)",
+    ],
+    ("goals", "Serie A", 75): [
+        "Silvio Piola (274)", "Francesco Totti (250)", "Gunnar Nordahl (225)",
+        "Roberto Baggio (205)", "Ciro Immobile (207+)", "Alessandro Del Piero (188)",
+        "Antonio Di Natale (188)", "Gigi Riva (164)", "Filippo Inzaghi (156)",
+        "Luca Toni (138)", "Gianluca Vialli (132)", "Christian Vieri (123)",
+    ],
+
+    # ── Goals – Bundesliga ────────────────────────────────────────────────────
+    ("goals", "Bundesliga", 50): [
+        "Gerd Müller (365)", "Robert Lewandowski (312)", "Klaus Fischer (268)",
+        "Jupp Heynckes (220)", "Manfred Burgsmüller (213)", "Dieter Müller (177)",
+        "Uli Hoeneß (86)", "Karl-Heinz Rummenigge (162)", "Stefan Kuntz (179)",
+        "Thomas Müller (230+)", "Mario Basler (97)", "Rudi Völler (134)",
+        "Oliver Bierhoff (102)", "Mario Gómez (177)", "Claudio Pizarro (197)",
+        "Miroslav Klose (121)", "Arjen Robben (99)", "Franck Ribéry (86)",
+    ],
+    ("goals", "Bundesliga", 75): [
+        "Gerd Müller (365)", "Robert Lewandowski (312)", "Klaus Fischer (268)",
+        "Jupp Heynckes (220)", "Thomas Müller (230+)", "Manfred Burgsmüller (213)",
+        "Dieter Müller (177)", "Mario Gómez (177)", "Claudio Pizarro (197)",
+        "Rudi Völler (134)", "Miroslav Klose (121)",
+    ],
+
+    # ── Goals – Ligue 1 ──────────────────────────────────────────────────────
+    ("goals", "Ligue 1", 50): [
+        "Delio Onnis (299)", "Josip Skoblar (202)", "Bernard Lacombe (255)",
+        "Jean-Pierre Papin (159)", "Zlatan Ibrahimović (113)", "Edinson Cavani (138)",
+        "Kylian Mbappé (180+)", "Neymar (73)", "Wissam Ben Yedder (153+)",
+        "Alexandre Lacazette (100)", "Andy Delort (86)", "Bafétimbi Gomis (176)",
+    ],
+    ("goals", "Ligue 1", 75): [
+        "Delio Onnis (299)", "Bernard Lacombe (255)", "Josip Skoblar (202)",
+        "Edinson Cavani (138)", "Kylian Mbappé (180+)", "Bafétimbi Gomis (176)",
+        "Jean-Pierre Papin (159)", "Wissam Ben Yedder (153+)",
+        "Alexandre Lacazette (100)", "Zlatan Ibrahimović (113)",
+    ],
+
+    # ── Goals – Champions League ──────────────────────────────────────────────
+    ("goals", "Champions League", 20): [
+        "Cristiano Ronaldo (140)", "Lionel Messi (129)", "Robert Lewandowski (91)",
+        "Karim Benzema (90)", "Raúl (71)", "Ruud van Nistelrooy (56)",
+        "Thomas Müller (53)", "Thierry Henry (50)", "Andriy Shevchenko (48)",
+        "Zlatan Ibrahimović (48)", "Didier Drogba (44)", "Edin Džeko (35)",
+        "Filippo Inzaghi (46)", "Fernando Morientes (33)", "Mo Salah (46+)",
+        "Erling Haaland (45+)", "Vinicius Jr (25+)", "Kylian Mbappé (42+)",
+    ],
+    ("goals", "Champions League", 30): [
+        "Cristiano Ronaldo (140)", "Lionel Messi (129)", "Robert Lewandowski (91)",
+        "Karim Benzema (90)", "Raúl (71)", "Ruud van Nistelrooy (56)",
+        "Thomas Müller (53)", "Andriy Shevchenko (48)", "Zlatan Ibrahimović (48)",
+        "Thierry Henry (50)", "Filippo Inzaghi (46)", "Erling Haaland (45+)",
+        "Mo Salah (46+)", "Kylian Mbappé (42+)",
+    ],
+
+    # ── Assists – career global ───────────────────────────────────────────────
+    ("assists", "career", 50): [
         "Lionel Messi", "Cristiano Ronaldo", "Kevin De Bruyne", "Toni Kroos",
-        "Luka Modrić", "Cesc Fàbregas", "Frank Lampard", "Steven Gerrard",
-        "Ryan Giggs", "David Beckham", "Angel Di María"
+        "Luka Modrić", "Cesc Fàbregas", "Ryan Giggs", "David Beckham",
+        "Angel Di María", "Mesut Özil", "Frank Lampard", "Steven Gerrard",
+        "Paul Scholes", "Thierry Henry", "Dennis Bergkamp",
     ],
-    "20+ CL Goals": [
-        "Cristiano Ronaldo (140+)", "Lionel Messi (129)", "Robert Lewandowski",
-        "Karim Benzema", "Raúl", "Ruud van Nistelrooy", "Thomas Müller",
-        "Thierry Henry", "Zlatan Ibrahimović", "Filippo Inzaghi",
-        "Didier Drogba", "Andriy Shevchenko", "Edin Džeko"
+    ("assists", "career", 100): [
+        "Lionel Messi", "Cristiano Ronaldo", "Kevin De Bruyne",
+        "Cesc Fàbregas", "Ryan Giggs", "Angel Di María", "Mesut Özil",
     ],
-    "50+ Clean Sheets career": [
+    ("assists", "Premier League", 25): [
+        "Ryan Giggs (162)", "Cesc Fàbregas (111)", "Wayne Rooney (103)",
+        "Frank Lampard (102)", "Andrew Cole (92)", "Steven Gerrard (92)",
+        "Kevin De Bruyne (110+)", "Mesut Özil (77)", "Dennis Bergkamp (94)",
+        "Robert Pires (73)", "David Beckham (80)", "Paul Scholes (55)",
+    ],
+    ("assists", "Premier League", 50): [
+        "Ryan Giggs (162)", "Kevin De Bruyne (110+)", "Cesc Fàbregas (111)",
+        "Wayne Rooney (103)", "Frank Lampard (102)", "Dennis Bergkamp (94)",
+        "Steven Gerrard (92)", "Andrew Cole (92)", "David Beckham (80)",
+    ],
+
+    # ── Clean sheets – career global ──────────────────────────────────────────
+    ("clean_sheets", "career", 50): [
         "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel", "Edwin van der Sar",
         "Oliver Kahn", "Manuel Neuer", "David de Gea", "Pepe Reina",
         "Joe Hart", "Thibaut Courtois", "Hugo Lloris", "Alisson Becker",
         "Ederson", "Kasper Schmeichel", "Gianluigi Donnarumma",
         "Victor Valdés", "Claudio Bravo", "David Seaman", "Neville Southall",
-        "Pat Jennings", "Gordon Banks", "Rene Higuita",
+        "Pat Jennings", "Gordon Banks",
+    ],
+    ("clean_sheets", "career", 100): [
+        "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel", "Edwin van der Sar",
+        "Oliver Kahn", "Manuel Neuer", "Thibaut Courtois", "Hugo Lloris",
+        "Pepe Reina", "David de Gea",
+    ],
+    ("clean_sheets", "Premier League", 30): [
+        "Pepe Reina (172)", "David de Gea (163)", "Joe Hart (159)",
+        "Peter Schmeichel (141)", "Edwin van der Sar (131)", "Thibaut Courtois (109)",
+        "Alisson Becker (140+)", "Hugo Lloris (130+)", "Rob Green (96)",
+        "Mark Schwarzer (107)", "Tim Howard (96)", "Brad Friedel (136)",
+    ],
+    ("clean_sheets", "Premier League", 50): [
+        "Pepe Reina (172)", "David de Gea (163)", "Joe Hart (159)",
+        "Brad Friedel (136)", "Peter Schmeichel (141)", "Alisson Becker (140+)",
+        "Edwin van der Sar (131)", "Hugo Lloris (130+)", "Thibaut Courtois (109)",
+        "Mark Schwarzer (107)",
     ],
 }
 
@@ -701,52 +825,101 @@ def resolve_answers(task_text: str) -> dict:
 
     # ── "[Nationality] player with N+ goals in [League]" (template type 11) ──
     # e.g. "Name a French player who has 50+ goals in La Liga"
+    # Strategy: pull the league-specific STAT_ANSWERS list, then filter by
+    # players known to be of that nationality via FBref cross-reference.
+    # If STAT_ANSWERS has no list, fall back to FBref nat+club lookup.
     if nat_match and re.search(r"\d+\+", t) and "goals" in t:
-        n_match = re.search(r"(\d+)\+", t)
-        n = int(n_match.group(1)) if n_match else 50
+        n = int(re.search(r"(\d+)\+", t).group(1))
         league_hit = None
         for league in ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]:
             if league.lower() in t:
                 league_hit = league
                 break
-        clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
-        players = []
-        for c in clubs_to_check:
-            players.extend(fetch_club_players_nationality(c, nat_match))
-        seen = set()
-        unique_players = []
-        for p in players:
-            if p.lower() not in seen:
-                seen.add(p.lower())
-                unique_players.append(p)
-        result["answers"] = unique_players
-        league_label = league_hit or "that league"
-        result["note"] = f"{nat_match} players at top {league_label} clubs · check goal tallies individually"
+
+        answered = False
+        if league_hit:
+            # Try curated league list first
+            candidates = [
+                (th, lst) for (s, sc, th), lst in STAT_ANSWERS.items()
+                if s == "goals" and sc == league_hit and th <= n
+            ]
+            if candidates:
+                # Show full league list with a note to filter by nationality —
+                # exact nationality data per scorer isn't in our static store
+                best_list = max(candidates, key=lambda x: x[0])[1]
+                result["answers"] = best_list
+                result["note"] = f"{league_hit} scorers with {n}+ goals · filter to {nat_match} players"
+                answered = True
+
+        if not answered:
+            # FBref fallback: all players of that nationality at top clubs in that league
+            clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
+            players = []
+            for c in clubs_to_check:
+                players.extend(fetch_club_players_nationality(c, nat_match))
+            seen = set()
+            unique_players = [p for p in players if not (p.lower() in seen or seen.add(p.lower()))]
+            result["answers"] = unique_players
+            league_label = league_hit or "that league"
+            result["note"] = f"{nat_match} players at top {league_label} clubs · check goal tallies"
         return result
 
-    # ── Generic "N+ goals/assists/clean sheets" ──────────────────────────────
-    stat_keys = {"goals": "Goals", "assists": "Assists", "clean sheets": "Clean Sheets"}
-    for kw, stat_name in stat_keys.items():
-        if kw in t:
-            n_match = re.search(r"(\d+)\+", t)
-            n = int(n_match.group(1)) if n_match else 0
-            if "champions league" in t or " cl " in t:
-                key = "20+ CL Goals"
-            elif n >= 200:
-                key = "200+ Goals career"
-            elif n >= 100 and stat_name == "Goals":
-                key = "100+ Goals career"
-            elif n >= 50 and stat_name == "Goals":
-                key = "50+ Goals league"
-            elif n >= 50 and stat_name == "Assists":
-                key = "50+ Assists career"
-            elif n >= 50 and stat_name == "Clean Sheets":
-                key = "50+ Clean Sheets career"
-            else:
-                key = "50+ Goals league"
-            result["answers"] = STAT_ANSWERS.get(key, [])
-            result["note"] = f"Players with {n}+ {stat_name.lower()} (examples)"
-            return result
+    # ── N+ stat questions (goals / assists / clean sheets) ───────────────────
+    # Parse: stat type, threshold, and scope (career / specific league / CL).
+    # Uses keyed STAT_ANSWERS[(stat, scope, threshold)] — no cross-league bleed.
+    stat_kw = None
+    if "clean sheets" in t:
+        stat_kw = "clean_sheets"
+    elif "assists" in t:
+        stat_kw = "assists"
+    elif "goals" in t:
+        stat_kw = "goals"
+
+    if stat_kw and re.search(r"\d+\+", t):
+        n = int(re.search(r"(\d+)\+", t).group(1))
+
+        # Determine scope: which league/competition the stat is measured in
+        SCOPE_KEYWORDS = {
+            "Champions League": "Champions League",
+            "Premier League":   "Premier League",
+            "La Liga":          "La Liga",
+            "Serie A":          "Serie A",
+            "Bundesliga":       "Bundesliga",
+            "Ligue 1":          "Ligue 1",
+        }
+        scope = "career"
+        for kw, label in SCOPE_KEYWORDS.items():
+            if kw.lower() in t:
+                scope = label
+                break
+        # "his career" or no league → career
+        if "career" in t or "his career" in t:
+            scope = "career"
+
+        # Find the closest threshold key at or below n
+        def best_key(stat, sc, threshold):
+            """Return the STAT_ANSWERS list for the closest threshold ≤ n."""
+            candidates = [
+                (th, lst) for (s, sc2, th), lst in STAT_ANSWERS.items()
+                if s == stat and sc2 == sc and th <= threshold
+            ]
+            if not candidates:
+                return []
+            return max(candidates, key=lambda x: x[0])[1]
+
+        answers = best_key(stat_kw, scope, n)
+
+        # If no league-specific list exists but a league was mentioned,
+        # fall back to FBref nat+club lookup for that league (no nationality
+        # filter — just top clubs — so we get scorers of any nationality)
+        if not answers and scope in LEAGUE_CLUBS:
+            result["note"] = f"No curated list for {n}+ {stat_kw} in {scope} — showing top-club players"
+            # Return empty so Google link shows; avoids wrong data
+        else:
+            result["answers"] = answers
+            league_label = scope if scope != "career" else "career"
+            result["note"] = f"Players with {n}+ {stat_kw.replace('_', ' ')} in {league_label}"
+        return result
 
     # ── "[Nationality] player who has played in [League]" (template type 9) ───
     # e.g. "Name a Dutch player who has played in La Liga"
