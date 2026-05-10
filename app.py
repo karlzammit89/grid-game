@@ -853,27 +853,21 @@ else:
                 st.rerun()
 
             # ── ANSWERS SECTION ──────────────────────────────────────────────
-            with st.expander("👁️ View Answers"):
-                ans_data = resolve_answers(task_text)
-                answers = ans_data.get("answers", [])
-                note = ans_data.get("note", "")
+            ans_data = resolve_answers(task_text)
+            answers = ans_data.get("answers", [])
+            note = ans_data.get("note", "")
+            expander_label = f"👁️ View Answers ({len(answers)})" if answers else "👁️ View Answers"
 
+            with st.expander(expander_label):
                 if answers:
                     if note:
                         st.caption(f"ℹ️ {note}")
 
-                    # Split into columns of ~8 items each for readability
-                    chunk_size = 8
-                    chunks = [answers[i:i+chunk_size] for i in range(0, len(answers), chunk_size)]
-                    col_count = min(len(chunks), 3)
-                    cols = st.columns(col_count)
-                    for idx, chunk in enumerate(chunks[:3]):
-                        with cols[idx]:
-                            for ans in chunk:
-                                st.markdown(
-                                    f"<div style='background:#2a2d36; border-radius:6px; padding:5px 8px; margin:3px 0; font-size:0.82rem; color:#e0e0e0;'>⚽ {ans}</div>",
-                                    unsafe_allow_html=True
-                                )
+                    rows_html = "".join(
+                        f"<div style='background:#2a2d36; border-radius:6px; padding:6px 10px; margin:4px 0; font-size:0.85rem; color:#e0e0e0;'>⚽ {ans}</div>"
+                        for ans in answers
+                    )
+                    st.markdown(rows_html, unsafe_allow_html=True)
                 else:
                     st.info("No preset answers for this question type.")
 
