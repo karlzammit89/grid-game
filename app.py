@@ -1388,6 +1388,18 @@ else:
                     seen_keys.add(key)
                     answers.append(ans)
 
+            # Sort by the numeric value inside parentheses, highest first.
+            # "Alan Shearer (260)" → 260, "Harry Kane (213+)" → 213,
+            # entries with no number keep their original position at the bottom.
+            def _sort_key(entry):
+                m = re.search(r"\((\d+)", entry)   # first number inside (...)
+                return int(m.group(1)) if m else -1
+
+            # Only sort if ANY entry has a number — avoids reordering plain
+            # name lists (managers, FBref results) that have their own ordering.
+            if any(re.search(r"\(\d+", a) for a in answers):
+                answers = sorted(answers, key=_sort_key, reverse=True)
+
             expander_label = f"👁️ View Answers ({len(answers)})" if answers else "👁️ View Answers"
 
             with st.expander(expander_label):
