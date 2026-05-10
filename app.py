@@ -158,56 +158,100 @@ KIT_ANSWERS = {
 
 MANAGERS_BY_CLUB = {
     "Real Madrid": [
-        "Carlo Ancelotti", "Zinedine Zidane", "José Mourinho", "Carlo Ancelotti (1st spell)",
-        "Fabio Capello", "Johan Cruyff", "Vanderlei Luxemburgo", "Bernd Schuster",
-        "Manuel Pellegrini", "Juande Ramos", "Marcelino"
+        # Most recent first
+        "Carlo Ancelotti", "Santiago Solari", "Julen Lopetegui", "Zinedine Zidane",
+        "Rafael Benítez", "Carlo Ancelotti (1st spell)", "José Mourinho",
+        "Manuel Pellegrini", "Bernd Schuster", "Fabio Capello", "Juan Ramón López Caro",
+        "Vanderlei Luxemburgo", "José Antonio Camacho", "Carlos Queiroz",
+        "Vicente del Bosque", "John Toshack", "Guus Hiddink", "Radoslav Momčilović",
+        "Johan Cruyff", "Leo Beenhakker", "Alfredo Di Stéfano",
     ],
     "Barcelona": [
-        "Pep Guardiola", "Luis Enrique", "Xavi Hernández", "Ronald Koeman",
-        "Quique Setién", "Ernesto Valverde", "Johan Cruyff", "Bobby Robson",
-        "Víctor Fernández", "Louis van Gaal", "Frank Rijkaard"
+        # Most recent first
+        "Hansi Flick", "Michał Probierz (no)", "Xavi Hernández", "Quique Setién",
+        "Ernesto Valverde", "Luis Enrique", "Tito Vilanova", "Pep Guardiola",
+        "Frank Rijkaard", "Louis van Gaal", "Lorenzo Serra Ferrer", "Louis van Gaal (1st spell)",
+        "Bobby Robson", "Johan Cruyff", "Udo Lattek", "Luis Aragonés",
+        "Helenio Herrera", "Vic Buckingham", "Rinus Michels",
+        "Ronald Koeman", "Víctor Fernández",
     ],
     "Bayern Munich": [
-        "Pep Guardiola", "Hansi Flick", "Niko Kovač", "Jupp Heynckes",
-        "Carlo Ancelotti", "Louis van Gaal", "Ottmar Hitzfeld", "Felix Magath",
-        "Giovanni Trapattoni", "Vincenzo Montella (no — Kovac)", "Thomas Tuchel", "Vincent Kompany"
+        # Most recent first
+        "Vincent Kompany", "Thomas Tuchel", "Julian Nagelsmann", "Niko Kovač",
+        "Jupp Heynckes", "Carlo Ancelotti", "Pep Guardiola", "Jupp Heynckes (1st spell)",
+        "Louis van Gaal", "Ottmar Hitzfeld", "Felix Magath", "Ottmar Hitzfeld (1st spell)",
+        "Giovanni Trapattoni", "Hansi Flick", "Søren Lerby", "Udo Lattek",
+        "Dettmar Cramer", "Branko Zebec",
     ],
     "Chelsea": [
-        "José Mourinho", "Carlo Ancelotti", "Claudio Ranieri", "Guus Hiddink",
-        "Avram Grant", "Luiz Felipe Scolari", "Roberto Di Matteo", "Rafa Benítez",
-        "Antonio Conte", "Maurizio Sarri", "Frank Lampard", "Thomas Tuchel",
-        "Graham Potter", "Mauricio Pochettino", "Enzo Maresca"
+        # Most recent first
+        "Enzo Maresca", "Mauricio Pochettino", "Frank Lampard (caretaker)",
+        "Graham Potter", "Thomas Tuchel", "Thomas Tuchel (caretaker)", "Frank Lampard",
+        "Maurizio Sarri", "Antonio Conte", "Guus Hiddink (caretaker)",
+        "José Mourinho (2nd spell)", "Rafa Benítez", "Roberto Di Matteo",
+        "André Villas-Boas", "Carlo Ancelotti", "Guus Hiddink (1st caretaker)",
+        "Luiz Felipe Scolari", "Avram Grant", "José Mourinho (1st spell)",
+        "Claudio Ranieri", "Gianluca Vialli", "Ruud Gullit", "Glenn Hoddle",
+        "Bobby Campbell", "John Neal",
     ],
     "PSG": [
-        "Carlo Ancelotti", "Laurent Blanc", "Unai Emery", "Thomas Tuchel",
-        "Mauricio Pochettino", "Christophe Galtier", "Luis Enrique", "Antoine Kombouaré"
+        # Most recent first
+        "Luis Enrique", "Christophe Galtier", "Mauricio Pochettino",
+        "Thomas Tuchel", "Thomas Tuchel (caretaker)", "Unai Emery",
+        "Laurent Blanc", "Carlo Ancelotti", "Antoine Kombouaré",
+        "Kombouaré", "Paul Le Guen", "Vahid Halilhodžić",
     ],
     "Juventus": [
-        "Antonio Conte", "Massimiliano Allegri", "Maurizio Sarri", "Andrea Pirlo",
-        "Didier Deschamps", "Fabio Capello", "Carlo Ancelotti", "Claudio Ranieri",
-        "Ciro Ferrara", "Thiago Motta"
+        # Most recent first
+        "Thiago Motta", "Massimiliano Allegri (2nd spell)", "Andrea Pirlo",
+        "Maurizio Sarri", "Massimiliano Allegri (1st spell)", "Antonio Conte",
+        "Luigi Delneri", "Ciro Ferrara", "Claudio Ranieri", "Didier Deschamps",
+        "Carlo Ancelotti", "Marcello Lippi", "Giovanni Trapattoni",
+        "Fabio Capello", "Roberto Bettega",
     ],
     "Inter Milan": [
-        "José Mourinho", "Roberto Mancini", "Simone Inzaghi", "Antonio Conte",
-        "Luciano Spalletti", "Frank de Boer", "Walter Mazzarri", "Héctor Cúper"
+        # Most recent first
+        "Simone Inzaghi", "Christian Chivu (caretaker)", "Stefano Pioli (caretaker)",
+        "Antonio Conte", "Luciano Spalletti", "Frank de Boer", "Roberto Mancini",
+        "Walter Mazzarri", "Rafa Benítez", "José Mourinho", "Roberto Mancini (1st spell)",
+        "Héctor Cúper", "Marcello Lippi", "Gigi Simoni", "Roy Hodgson", "Ottavio Bianchi",
+        "Giovanni Trapattoni",
     ],
     "Man Utd": [
-        "Sir Alex Ferguson", "David Moyes", "Louis van Gaal", "José Mourinho",
-        "Ole Gunnar Solskjær", "Ralf Rangnick", "Erik ten Hag", "Ruben Amorim"
+        # Most recent first
+        "Ruben Amorim", "Erik ten Hag", "Ralf Rangnick", "Ole Gunnar Solskjær",
+        "Michael Carrick (caretaker)", "José Mourinho", "Louis van Gaal",
+        "Ryan Giggs (caretaker)", "David Moyes", "Sir Alex Ferguson",
+        "Ron Atkinson", "Dave Sexton", "Tommy Docherty", "Frank O'Farrell",
+        "Wilf McGuinness", "Matt Busby",
     ],
     "Liverpool": [
-        "Jürgen Klopp", "Brendan Rodgers", "Roy Hodgson", "Rafael Benítez",
-        "Gérard Houllier", "Roy Evans", "Kenny Dalglish", "Graeme Souness",
-        "Arne Slot"
+        # Most recent first
+        "Arne Slot", "Jürgen Klopp", "Brendan Rodgers", "Kenny Dalglish (2nd spell)",
+        "Roy Hodgson", "Rafael Benítez", "Gérard Houllier", "Roy Evans",
+        "Kenny Dalglish (1st spell)", "Bob Paisley", "Bill Shankly",
+        "Graeme Souness", "Ronnie Moran (caretaker)", "Phil Thompson (caretaker)",
     ],
     "Arsenal": [
-        "Arsène Wenger", "Bruce Rioch", "George Graham", "Unai Emery",
-        "Freddie Ljungberg", "Mikel Arteta"
+        # Most recent first
+        "Mikel Arteta", "Freddie Ljungberg (caretaker)", "Unai Emery",
+        "Arsène Wenger", "Bruce Rioch", "Stewart Houston (caretaker)",
+        "George Graham", "Don Howe", "Terry Neill", "Bertie Mee",
     ],
     "AC Milan": [
-        "Arrigo Sacchi", "Fabio Capello", "Carlo Ancelotti", "Clarence Seedorf",
-        "Filippo Inzaghi", "Sinisa Mihajlovic", "Vincenzo Montella", "Gennaro Gattuso",
-        "Marco Giampaolo", "Stefano Pioli", "Paulo Fonseca", "Sérgio Conceição"
+        # Most recent first
+        "Sérgio Conceição", "Paulo Fonseca", "Stefano Pioli", "Marco Giampaolo",
+        "Gennaro Gattuso", "Vincenzo Montella", "Cristian Brocchi (caretaker)",
+        "Sinisa Mihajlovic", "Filippo Inzaghi", "Clarence Seedorf",
+        "Massimiliano Allegri", "Leonardo (caretaker)", "Carlo Ancelotti",
+        "Fatih Terim", "Arrigo Sacchi (2nd spell)", "Fabio Capello",
+        "Arrigo Sacchi", "Nils Liedholm",
+    ],
+    "Atletico Madrid": [
+        # Most recent first
+        "Diego Simeone", "Gregorio Manzano", "Quique Sánchez Flores",
+        "Abel Resino", "Luis Aragonés", "Arrigo Sacchi", "César Luis Menotti",
+        "Ron Atkinson", "Héctor Núñez",
     ],
 }
 
@@ -874,10 +918,13 @@ else:
                 # Always show a Google fallback link at the bottom
                 search_query = task_text.replace("Name a", "").replace("Name an", "").strip()
                 st.markdown(
-                    f"""<a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
-                        <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555; margin-top:8px;">
-                            🔍 Search Google for more answers
-                        </div></a>""",
+                    f"""<div style="margin-top:12px;">
+                        <a href="https://www.google.com/search?q=football+{search_query.replace(' ', '+')}" target="_blank" style="text-decoration:none;">
+                            <div style="background:#333; color:white; padding:10px; border-radius:5px; text-align:center; font-size:0.8rem; border:1px solid #555;">
+                                🔍 Search Google for more answers
+                            </div>
+                        </a>
+                    </div>""",
                     unsafe_allow_html=True
                 )
 
