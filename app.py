@@ -169,12 +169,12 @@ MANAGERS_BY_CLUB = {
     ],
     "Barcelona": [
         # Most recent first
-        "Hansi Flick", "Michał Probierz (no)", "Xavi Hernández", "Quique Setién",
+        "Hansi Flick", "Xavi Hernández", "Quique Setién",
         "Ernesto Valverde", "Luis Enrique", "Tito Vilanova", "Pep Guardiola",
-        "Frank Rijkaard", "Louis van Gaal", "Lorenzo Serra Ferrer", "Louis van Gaal (1st spell)",
-        "Bobby Robson", "Johan Cruyff", "Udo Lattek", "Luis Aragonés",
-        "Helenio Herrera", "Vic Buckingham", "Rinus Michels",
-        "Ronald Koeman", "Víctor Fernández",
+        "Frank Rijkaard", "Louis van Gaal (2nd spell)", "Lorenzo Serra Ferrer",
+        "Louis van Gaal (1st spell)", "Bobby Robson", "Johan Cruyff",
+        "Udo Lattek", "Luis Aragonés", "Helenio Herrera",
+        "Vic Buckingham", "Rinus Michels", "Ronald Koeman", "Víctor Fernández",
     ],
     "Bayern Munich": [
         # Most recent first
@@ -274,18 +274,19 @@ FBREF_NAT_ISO3 = {
     "Japanese":    "JPN", "South Korean":"KOR", "Australian":  "AUS",
 }
 
-# FBref franchise/club IDs for the nationality-at-club lookup.
-# These are the same hex IDs already used in CLUB_IDS above.
+# FBref franchise/club NUMERIC IDs used in the ?level=franch&t1=NAT_XXX&t2=NUMERIC_ID URL.
+# These are DIFFERENT from the hex IDs in CLUB_IDS (which are for club-vs-club lookups).
+# Numeric IDs sourced from FBref club page URLs, e.g. fbref.com/en/squads/NUMERIC_ID/...
 FBREF_CLUB_IDS = {
-    "Man Utd":       "19538871", "Liverpool":     "822bd0ba", "Arsenal":       "18bb7c10",
-    "Chelsea":       "cff3d3bb", "Man City":      "b8fd03ef", "Tottenham":     "3ad23a75",
-    "Aston Villa":   "860223d1", "Newcastle":     "b1b71fcb", "Real Madrid":   "5324c30a",
-    "Barcelona":     "206d9d25", "Atletico Madrid":"db3b5483", "Sevilla":       "ad2be748",
-    "AC Milan":      "e2d42690", "Juventus":      "e2d42690", "Inter Milan":   "d60ad303",
-    "Bayern Munich": "054fdde2", "PSG":           "e2d8892c", "Dortmund":      "add600a5",
-    "Ajax":          "a96ecf6e", "Porto":         "5f43e2c5", "Benfica":       "f8ca3df0",
-    "Sporting CP":   "afd5e9dc", "Napoli":        "d348d1a8", "AS Roma":       "cf74a709",
-    "Marseille":     "f74cd1e4", "Lyon":          "f4ede454", "Monaco":        "fd6114db",
+    "Man Utd":        "19538871", "Liverpool":      "164575",  "Arsenal":        "153995",
+    "Chelsea":        "cff3d3bb", "Man City":       "b8fd03ef","Tottenham":      "361ca564",
+    "Aston Villa":    "8602c90d", "Newcastle":      "b2b91eca","Real Madrid":    "159928",
+    "Barcelona":      "154774",   "Atletico Madrid":"173488",  "Sevilla":        "ad2be748",
+    "AC Milan":       "d48ad4ff", "Juventus":       "e0652b08","Inter Milan":    "d609edc0",
+    "Bayern Munich":  "054fdde2", "PSG":            "e2d8892c","Dortmund":       "add600a5",
+    "Ajax":           "a96ecf6e", "Porto":          "5f43e2c5","Benfica":        "f8ca3df0",
+    "Sporting CP":    "afd5e9dc", "Napoli":         "d348d1a8","AS Roma":        "cf74a709",
+    "Marseille":      "f74cd1e4", "Lyon":           "f4ede454","Monaco":         "fd6114db",
 }
 
 TROPHY_TEAM_ANSWERS = {
@@ -344,11 +345,13 @@ TROPHY_TEAM_ANSWERS = {
         "Ecuador (never won)"
     ],
     "Championship": [
-        "Any second-tier English club — e.g. Leicester (2014), Fulham (2022)",
-        "Leeds Utd", "Nottingham Forest", "Bournemouth", "Luton Town", "Sunderland",
-        "Sheffield Utd", "Norwich City", "Brentford", "Watford", "Huddersfield",
-        "Cardiff City", "Burnley", "Stoke City", "QPR", "Derby County",
-        "Blackpool", "West Brom"
+        "Leicester City", "Burnley", "Fulham", "Norwich City", "Brentford",
+        "Leeds Utd", "Sheffield Utd", "Wolverhampton", "Newcastle",
+        "Nottingham Forest", "Bournemouth", "Watford", "Huddersfield",
+        "Cardiff City", "Stoke City", "QPR", "Derby County", "West Brom",
+        "Blackpool", "Sunderland", "Luton Town", "Birmingham City",
+        "Reading", "Wigan Athletic", "Ipswich Town", "Southampton",
+        "Crystal Palace", "Brighton", "Millwall", "Swansea City",
     ],
 }
 
@@ -507,24 +510,9 @@ def fetch_club_players_nationality(club: str, nationality: str) -> list[str]:
         pass
     return []
 
-# Wikidata QIDs for each competition we generate trophy questions about.
-# When a new winner is added on Wikidata (usually within days of the final),
-# it shows up automatically in results — no code changes needed.
-WIKIDATA_COMPETITION_QIDS = {
-    "Champions League": "Q18123741",  # UEFA Champions League (season-level)
-    "Europa League":    "Q18024952",
-    "Premier League":   "Q18091908",
-    "FA Cup":           "Q192145",
-    "La Liga":          "Q18091865",
-    "Serie A":          "Q18091899",
-    "Bundesliga":       "Q18091869",
-    "Ligue 1":          "Q18091875",
-    "World Cup":        "Q18123741",  # overridden below — separate query
-    "Euros":            "Q12548",
-    "Copa America":     "Q35765",
-}
-
-# Separate QIDs for the competition itself (used for team-winner queries)
+# Wikidata QIDs for competitions — used for live trophy winner lookups.
+# Championship is intentionally excluded: Wikidata's EFL Championship data
+# is too sparse to return reliable results, so we use the static list instead.
 WIKIDATA_COMP_INSTANCE_QIDS = {
     "Champions League": "Q37186",
     "Europa League":    "Q193796",
@@ -548,10 +536,8 @@ _SPARQL_HEADERS  = {
 @st.cache_data(ttl=43200, show_spinner=False)   # refresh every 12 h
 def fetch_trophy_teams_wikidata(competition: str) -> list[str]:
     """
-    Return all clubs that have won a competition, via Wikidata SPARQL.
-    P31  = instance of  → season/edition item
-    P179 = part of series → the competition series
-    P1346 = winner
+    Return all clubs/nations that have won a competition, via Wikidata SPARQL.
+    Only used for team-level questions. Championship excluded (sparse Wikidata data).
     """
     comp_qid = WIKIDATA_COMP_INSTANCE_QIDS.get(competition)
     if not comp_qid:
@@ -577,38 +563,10 @@ ORDER BY ?winnerLabel
         return []
 
 
-@st.cache_data(ttl=43200, show_spinner=False)
-def fetch_trophy_players_wikidata(competition: str) -> list[str]:
-    """
-    Return players who have won a competition medal, via Wikidata.
-    Uses P awarded (P166) or P participant (P710) on the edition items,
-    filtered to humans (Q5).  Falls back to static list if SPARQL is slow/empty.
-    """
-    comp_qid = WIKIDATA_COMP_INSTANCE_QIDS.get(competition)
-    if not comp_qid:
-        return []
-    sparql = f"""
-SELECT DISTINCT ?playerLabel WHERE {{
-  ?edition wdt:P31/wdt:P279* wd:{comp_qid} .
-  ?edition wdt:P1346 ?winnerClub .
-  ?player wdt:P54 ?winnerClub ;
-          wdt:P31 wd:Q5 .
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
-}}
-LIMIT 300
-"""
-    try:
-        resp = requests.get(
-            _SPARQL_ENDPOINT,
-            params={"query": sparql, "format": "json"},
-            headers=_SPARQL_HEADERS,
-            timeout=12,
-        )
-        data = resp.json()
-        players = [b["playerLabel"]["value"] for b in data["results"]["bindings"]]
-        return players if players else []
-    except Exception:
-        return []
+# Note: player trophy answers are static-only (PLAYER_TROPHY_ANSWERS dict).
+# A Wikidata player query would return every player who ever appeared for a
+# winning club regardless of nationality — producing false positives like
+# "Egyptian players who won Copa América". The static list is curated and correct.
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -696,19 +654,13 @@ def resolve_answers(task_text: str) -> dict:
                     result["note"] = "Static list (Wikidata unavailable)"
                 return result
 
-    # ── "player who has won [Trophy]" — live via Wikidata ────────────────────
+    # ── "player who has won [Trophy]" — static lookup ────────────────────────
     if ("player" in t or nat_match) and "won" in t:
-        for trophy in WIKIDATA_COMP_INSTANCE_QIDS:
+        for trophy in PLAYER_TROPHY_ANSWERS:
             if trophy.lower() in t:
-                live = fetch_trophy_players_wikidata(trophy)
-                static = PLAYER_TROPHY_ANSWERS.get(trophy, [])
-                # Merge: live first, then any static names not already present
-                combined = list(dict.fromkeys(live + static)) if live else static
-                result["answers"] = combined
+                result["answers"] = PLAYER_TROPHY_ANSWERS[trophy]
                 if nat_match:
-                    result["note"] = f"Filter to {nat_match} players — live from Wikidata"
-                else:
-                    result["note"] = "Live from Wikidata — updates after each final"
+                    result["note"] = f"Filter to {nat_match} players"
                 return result
 
     # ── "[Nationality] player with N+ goals in [League]" (template type 11) ──
