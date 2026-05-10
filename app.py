@@ -738,8 +738,88 @@ STAT_ANSWERS = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. LIVE ANSWER FETCHERS (Wikipedia API — no key required, auto-updates)
+# 3. LIVE ANSWER FETCHERS
 # ─────────────────────────────────────────────────────────────────────────────
+
+# Transfermarkt competition IDs for the all-time scorer list endpoint:
+#   https://www.transfermarkt.com/{slug}/ewigetorschuetzenliste/wettbewerb/{ID}
+# These never change — they're permanent competition identifiers.
+TM_COMP_IDS = {
+    "Premier League":   ("premier-league",    "GB1"),
+    "La Liga":          ("laliga",             "ES1"),
+    "Serie A":          ("serie-a",            "IT1"),
+    "Bundesliga":       ("bundesliga",         "L1"),
+    "Ligue 1":          ("ligue-1",            "FR1"),
+    "Champions League": ("champions-league",   "CL"),
+}
+
+_TM_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; FootballTrivia/1.0)",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+@st.cache_data(ttl=86400, show_spinner=False)   # refresh every 24 h
+def fetch_alltime_scorers(competition: str, threshold: int, top_n: int = 30) -> list[str]:
+    """
+    Scrape Transfermarkt's all-time top-scorers page for a league/competition
+    and return players whose career goal tally in that competition is ≥ threshold,
+    formatted as "Player Name (N)" sorted highest-first.
+
+    Falls back to [] on any error so the resolver can fall through to STAT_ANSWERS.
+    """
+    comp = TM_COMP_IDS.get(competition)
+    if not comp:
+        return []
+    slug, comp_id = comp
+    url = f"https://www.transfermarkt.com/{slug}/ewigetorschuetzenliste/wettbewerb/{comp_id}"
+    try:
+        tables = pd.read_html(
+            url,
+            storage_options=_TM_HEADERS,
+            extract_links=None,
+        )
+        if not tables:
+            return []
+        df = tables[0]
+
+        # Transfermarkt table columns vary slightly — find the name col and goals col
+        # by inspecting column names (they're often multi-level after pd.read_html)
+        # Flatten multi-level columns if present
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [" ".join(str(c) for c in col).strip() for col in df.columns]
+
+        # Identify the player name column and goals column heuristically
+        name_col = None
+        goals_col = None
+        for col in df.columns:
+            col_lower = str(col).lower()
+            if "player" in col_lower or "name" in col_lower or "spieler" in col_lower:
+                name_col = col
+            if col_lower in ("goals", "g", "tore") or col_lower.startswith("goal"):
+                goals_col = col
+
+        # Fallback: first string column = name, last numeric = goals
+        if name_col is None:
+            str_cols = [c for c in df.columns if df[c].dtype == object]
+            if str_cols:
+                name_col = str_cols[0]
+        if goals_col is None:
+            num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+            if num_cols:
+                goals_col = num_cols[-1]
+
+        if name_col is None or goals_col is None:
+            return []
+
+        df = df[[name_col, goals_col]].copy()
+        df.columns = ["player", "goals"]
+        df["goals"] = pd.to_numeric(df["goals"], errors="coerce")
+        df = df.dropna(subset=["goals"])
+        df = df[df["goals"] >= threshold]
+        df = df.sort_values("goals", ascending=False).head(top_n)
+        return [f"{row['player']} ({int(row['goals'])})" for _, row in df.iterrows()]
+    except Exception:
+        return []
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_shared_players(club1, club2):
@@ -974,9 +1054,7 @@ def resolve_answers(task_text: str) -> dict:
 
     # ── "[Nationality] player with N+ goals in [League]" (template type 11) ──
     # e.g. "Name a French player who has 50+ goals in La Liga"
-    # Strategy: pull the league-specific STAT_ANSWERS list, then filter by
-    # players known to be of that nationality via FBref cross-reference.
-    # If STAT_ANSWERS has no list, fall back to FBref nat+club lookup.
+    # Live Transfermarkt data for the league goal list; nationality note added.
     if nat_match and re.search(r"\d+\+", t) and "goals" in t:
         n = int(re.search(r"(\d+)\+", t).group(1))
         league_hit = None
@@ -985,37 +1063,34 @@ def resolve_answers(task_text: str) -> dict:
                 league_hit = league
                 break
 
-        answered = False
         if league_hit:
-            # Try curated league list first
-            candidates = [
-                (th, lst) for (s, sc, th), lst in STAT_ANSWERS.items()
-                if s == "goals" and sc == league_hit and th <= n
-            ]
+            live = fetch_alltime_scorers(league_hit, n)
+            if live:
+                result["answers"] = live
+                result["note"] = f"Live from Transfermarkt · {league_hit} scorers with {n}+ goals · filter to {nat_match}"
+                return result
+            # Fallback: static list
+            candidates = [(th, lst) for (s, sc, th), lst in STAT_ANSWERS.items()
+                          if s == "goals" and sc == league_hit and th <= n]
             if candidates:
-                # Show full league list with a note to filter by nationality —
-                # exact nationality data per scorer isn't in our static store
-                best_list = max(candidates, key=lambda x: x[0])[1]
-                result["answers"] = best_list
+                result["answers"] = max(candidates, key=lambda x: x[0])[1]
                 result["note"] = f"{league_hit} scorers with {n}+ goals · filter to {nat_match} players"
-                answered = True
+                return result
 
-        if not answered:
-            # FBref fallback: all players of that nationality at top clubs in that league
-            clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
-            players = []
-            for c in clubs_to_check:
-                players.extend(fetch_club_players_nationality(c, nat_match))
-            seen = set()
-            unique_players = [p for p in players if not (p.lower() in seen or seen.add(p.lower()))]
-            result["answers"] = unique_players
-            league_label = league_hit or "that league"
-            result["note"] = f"{nat_match} players at top {league_label} clubs · check goal tallies"
+        # Last resort: FBref nat+club
+        clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
+        players = []
+        for c in clubs_to_check:
+            players.extend(fetch_club_players_nationality(c, nat_match))
+        seen = set()
+        unique_players = [p for p in players if not (p.lower() in seen or seen.add(p.lower()))]
+        result["answers"] = unique_players
+        result["note"] = f"{nat_match} players at top {league_hit or 'league'} clubs · check goal tallies"
         return result
 
-    # ── N+ stat questions (goals / assists / clean sheets) ───────────────────
-    # Parse: stat type, threshold, and scope (career / specific league / CL).
-    # Uses keyed STAT_ANSWERS[(stat, scope, threshold)] — no cross-league bleed.
+    # ── N+ stat questions (goals / assists / clean sheets / bookings) ─────────
+    # For goals-by-league: try live Transfermarkt first, fall back to STAT_ANSWERS.
+    # For assists, clean sheets, bookings: always use STAT_ANSWERS (no live source).
     stat_kw = None
     if "clean sheets" in t:
         stat_kw = "clean_sheets"
@@ -1029,7 +1104,6 @@ def resolve_answers(task_text: str) -> dict:
     if stat_kw and re.search(r"\d+\+", t):
         n = int(re.search(r"(\d+)\+", t).group(1))
 
-        # Determine scope: which league/competition the stat is measured in
         SCOPE_KEYWORDS = {
             "Champions League": "Champions League",
             "Premier League":   "Premier League",
@@ -1043,33 +1117,29 @@ def resolve_answers(task_text: str) -> dict:
             if kw.lower() in t:
                 scope = label
                 break
-        # "his career" or no league → career
         if "career" in t or "his career" in t:
             scope = "career"
 
-        # Find the closest threshold key at or below n
+        # Live path: goals in a specific league (not career, not CL)
+        if stat_kw == "goals" and scope in TM_COMP_IDS:
+            live = fetch_alltime_scorers(scope, n)
+            if live:
+                result["answers"] = live
+                result["note"] = f"Live from Transfermarkt · {scope} all-time scorers with {n}+ goals"
+                return result
+
+        # Static fallback for everything else
         def best_key(stat, sc, threshold):
-            """Return the STAT_ANSWERS list for the closest threshold ≤ n."""
-            candidates = [
-                (th, lst) for (s, sc2, th), lst in STAT_ANSWERS.items()
-                if s == stat and sc2 == sc and th <= threshold
-            ]
+            candidates = [(th, lst) for (s, sc2, th), lst in STAT_ANSWERS.items()
+                          if s == stat and sc2 == sc and th <= threshold]
             if not candidates:
                 return []
             return max(candidates, key=lambda x: x[0])[1]
 
         answers = best_key(stat_kw, scope, n)
-
-        # If no league-specific list exists but a league was mentioned,
-        # fall back to FBref nat+club lookup for that league (no nationality
-        # filter — just top clubs — so we get scorers of any nationality)
-        if not answers and scope in LEAGUE_CLUBS:
-            result["note"] = f"No curated list for {n}+ {stat_kw} in {scope} — showing top-club players"
-            # Return empty so Google link shows; avoids wrong data
-        else:
-            result["answers"] = answers
-            league_label = scope if scope != "career" else "career"
-            result["note"] = f"Players with {n}+ {stat_kw.replace('_', ' ')} in {league_label}"
+        result["answers"] = answers
+        league_label = scope if scope != "career" else "career"
+        result["note"] = f"Players with {n}+ {stat_kw.replace('_', ' ')} in {league_label}"
         return result
 
     # ── "[Nationality] player who has played in [League]" (template type 9) ───
