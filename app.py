@@ -426,165 +426,313 @@ PLAYER_TROPHY_ANSWERS = {
 }
 
 STAT_ANSWERS = {
-    # ── Goals – career global ─────────────────────────────────────────────────
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # GOALS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # ── career ───────────────────────────────────────────────────────────────
     ("goals", "career", 100): [
         "Cristiano Ronaldo", "Lionel Messi", "Romário", "Pelé", "Josef Bican",
-        "Ferenc Puskás", "Gerd Müller", "Eusébio", "Wayne Rooney", "Andrew Cole",
-        "Frank Lampard", "Jimmy Greaves", "Thierry Henry", "Robbie Fowler",
-        "Michael Owen", "Ian Rush", "Gary Lineker", "Alan Shearer",
-        "Zlatan Ibrahimović", "Robert Lewandowski", "Karim Benzema", "Samuel Eto'o",
+        "Ferenc Puskás", "Gerd Müller", "Eusébio", "Alan Shearer",
+        "Wayne Rooney", "Andrew Cole", "Frank Lampard", "Jimmy Greaves",
+        "Thierry Henry", "Robbie Fowler", "Michael Owen", "Ian Rush",
+        "Gary Lineker", "Zlatan Ibrahimović", "Robert Lewandowski",
+        "Karim Benzema", "Samuel Eto'o", "Didier Drogba", "Raúl",
+        "David Villa", "Filippo Inzaghi",
     ],
     ("goals", "career", 200): [
         "Cristiano Ronaldo", "Lionel Messi", "Romário", "Pelé", "Josef Bican",
         "Ferenc Puskás", "Gerd Müller", "Eusébio", "Raúl", "Karim Benzema",
-        "Filippo Inzaghi", "Zlatan Ibrahimović", "Robert Lewandowski", "Samuel Eto'o",
-        "Ronaldo (R9)", "David Villa", "Didier Drogba",
+        "Filippo Inzaghi", "Zlatan Ibrahimović", "Robert Lewandowski",
+        "Samuel Eto'o", "Ronaldo (R9)", "David Villa", "Didier Drogba",
+        "Alan Shearer", "Ciro Immobile", "Francesco Totti",
     ],
 
-    # ── Goals – Premier League ────────────────────────────────────────────────
+    # ── Premier League ───────────────────────────────────────────────────────
     ("goals", "Premier League", 50): [
         "Alan Shearer (260)", "Andrew Cole (187)", "Wayne Rooney (208)",
         "Frank Lampard (177)", "Thierry Henry (175)", "Robbie Fowler (163)",
-        "Michael Owen (150)", "Les Ferdinand (149)", "Teddy Sheringham (146)",
-        "Jimmy Floyd Hasselbaink (127)", "Robbie Keane (126)", "Emile Heskey (110)",
-        "Jermain Defoe (162)", "Nicolas Anelka (125)", "Dion Dublin (111)",
-        "Ian Wright (113)", "Dwight Yorke (123)", "Paul Scholes (107)",
-        "Steve McManaman", "Darren Bent (106)", "Harry Kane (213+)",
+        "Jermain Defoe (162)", "Michael Owen (150)", "Les Ferdinand (149)",
+        "Teddy Sheringham (146)", "Robbie Keane (126)", "Nicolas Anelka (125)",
+        "Dwight Yorke (123)", "Dion Dublin (111)", "Ian Wright (113)",
+        "Emile Heskey (110)", "Paul Scholes (107)", "Darren Bent (106)",
+        "Jimmy Floyd Hasselbaink (127)", "Harry Kane (213+)",
         "Mohamed Salah (170+)", "Sergio Agüero (184)",
     ],
     ("goals", "Premier League", 75): [
-        "Alan Shearer (260)", "Andrew Cole (187)", "Wayne Rooney (208)",
-        "Frank Lampard (177)", "Thierry Henry (175)", "Robbie Fowler (163)",
-        "Harry Kane (213+)", "Mohamed Salah (170+)", "Sergio Agüero (184)",
-        "Michael Owen (150)", "Jermain Defoe (162)", "Les Ferdinand (149)",
+        "Alan Shearer (260)", "Wayne Rooney (208)", "Harry Kane (213+)",
+        "Sergio Agüero (184)", "Andrew Cole (187)", "Frank Lampard (177)",
+        "Mohamed Salah (170+)", "Thierry Henry (175)", "Robbie Fowler (163)",
+        "Jermain Defoe (162)", "Les Ferdinand (149)", "Michael Owen (150)",
+        "Jimmy Floyd Hasselbaink (127)", "Robbie Keane (126)",
     ],
 
-    # ── Goals – La Liga ───────────────────────────────────────────────────────
+    # ── La Liga ──────────────────────────────────────────────────────────────
     ("goals", "La Liga", 50): [
-        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Raúl (228)",
-        "Karim Benzema (219)", "Hugo Sánchez (234)", "Telmo Zarra (251)",
-        "Quini (219)", "Pahiño", "Alfredo Di Stéfano (227)",
-        "Carlos Santillana (186)", "Fernando Torres (82)", "David Villa (185)",
-        "Ronaldo R9 (30 — too few)", "Luis Suárez (121)", "Antoine Griezmann (133+)",
-        "Robert Lewandowski (60+)", "Vinicius Jr (80+)",
+        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Telmo Zarra (251)",
+        "Hugo Sánchez (234)", "Alfredo Di Stéfano (227)", "Raúl (228)",
+        "Pahiño (210)", "Karim Benzema (219)", "Quini (219)",
+        "Carlos Santillana (186)", "David Villa (185)",
+        "Antoine Griezmann (133+)", "Luis Suárez (121)",
+        "Robert Lewandowski (60+)", "Fernando Torres (82)",
+        "Vinicius Jr (80+)", "Ruud van Nistelrooy (64)",
+        "Iago Aspas (180+)",
     ],
     ("goals", "La Liga", 75): [
-        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Raúl (228)",
-        "Karim Benzema (219)", "Hugo Sánchez (234)", "Telmo Zarra (251)",
-        "David Villa (185)", "Luis Suárez (121)", "Antoine Griezmann (133+)",
+        "Lionel Messi (474)", "Cristiano Ronaldo (311)", "Telmo Zarra (251)",
+        "Hugo Sánchez (234)", "Raúl (228)", "Karim Benzema (219)",
+        "Quini (219)", "Pahiño (210)", "Alfredo Di Stéfano (227)",
+        "David Villa (185)", "Carlos Santillana (186)",
+        "Antoine Griezmann (133+)", "Luis Suárez (121)", "Iago Aspas (180+)",
     ],
 
-    # ── Goals – Serie A ───────────────────────────────────────────────────────
+    # ── Serie A ──────────────────────────────────────────────────────────────
     ("goals", "Serie A", 50): [
-        "Silvio Piola (274)", "Gunnar Nordahl (225)", "Giuseppe Meazza (216)",
-        "José Altafini (216)", "Roberto Baggio (205)", "Alessandro Del Piero (188)",
-        "Gigi Riva (164)", "Francesco Totti (250)", "Gianluca Vialli (132)",
-        "Filippo Inzaghi (156)", "Luca Toni (138)", "Christian Vieri (123)",
-        "Zlatan Ibrahimović (93)", "Romelu Lukaku (64)", "Lautaro Martínez (100+)",
-        "Ciro Immobile (207+)", "Edin Džeko (85)", "Antonio Di Natale (188)",
+        "Silvio Piola (274)", "Francesco Totti (250)", "Gunnar Nordahl (225)",
+        "José Altafini (216)", "Giuseppe Meazza (216)", "Roberto Baggio (205)",
+        "Ciro Immobile (207+)", "Alessandro Del Piero (188)",
+        "Antonio Di Natale (188)", "Gigi Riva (164)", "Filippo Inzaghi (156)",
+        "Luca Toni (138)", "Gianluca Vialli (132)", "Christian Vieri (123)",
+        "Lautaro Martínez (100+)", "Edin Džeko (85)",
+        "Zlatan Ibrahimović (93)", "Romelu Lukaku (64)",
+        "Gabriel Batistuta (168)",
     ],
     ("goals", "Serie A", 75): [
         "Silvio Piola (274)", "Francesco Totti (250)", "Gunnar Nordahl (225)",
-        "Roberto Baggio (205)", "Ciro Immobile (207+)", "Alessandro Del Piero (188)",
-        "Antonio Di Natale (188)", "Gigi Riva (164)", "Filippo Inzaghi (156)",
-        "Luca Toni (138)", "Gianluca Vialli (132)", "Christian Vieri (123)",
+        "Roberto Baggio (205)", "Ciro Immobile (207+)", "Gabriel Batistuta (168)",
+        "Alessandro Del Piero (188)", "Antonio Di Natale (188)",
+        "Gigi Riva (164)", "Filippo Inzaghi (156)", "Luca Toni (138)",
+        "Gianluca Vialli (132)", "Christian Vieri (123)", "Lautaro Martínez (100+)",
     ],
 
-    # ── Goals – Bundesliga ────────────────────────────────────────────────────
+    # ── Bundesliga ───────────────────────────────────────────────────────────
     ("goals", "Bundesliga", 50): [
         "Gerd Müller (365)", "Robert Lewandowski (312)", "Klaus Fischer (268)",
-        "Jupp Heynckes (220)", "Manfred Burgsmüller (213)", "Dieter Müller (177)",
-        "Uli Hoeneß (86)", "Karl-Heinz Rummenigge (162)", "Stefan Kuntz (179)",
-        "Thomas Müller (230+)", "Mario Basler (97)", "Rudi Völler (134)",
-        "Oliver Bierhoff (102)", "Mario Gómez (177)", "Claudio Pizarro (197)",
-        "Miroslav Klose (121)", "Arjen Robben (99)", "Franck Ribéry (86)",
+        "Jupp Heynckes (220)", "Thomas Müller (230+)", "Manfred Burgsmüller (213)",
+        "Claudio Pizarro (197)", "Stefan Kuntz (179)", "Dieter Müller (177)",
+        "Mario Gómez (177)", "Rudi Völler (134)", "Miroslav Klose (121)",
+        "Oliver Bierhoff (102)", "Karl-Heinz Rummenigge (162)",
+        "Arjen Robben (99)", "Mario Basler (97)", "Franck Ribéry (86)",
+        "Uli Hoeneß (86)", "Erling Haaland (16 — too few)", "Harry Kane (50+)",
     ],
     ("goals", "Bundesliga", 75): [
         "Gerd Müller (365)", "Robert Lewandowski (312)", "Klaus Fischer (268)",
         "Jupp Heynckes (220)", "Thomas Müller (230+)", "Manfred Burgsmüller (213)",
-        "Dieter Müller (177)", "Mario Gómez (177)", "Claudio Pizarro (197)",
-        "Rudi Völler (134)", "Miroslav Klose (121)",
+        "Claudio Pizarro (197)", "Karl-Heinz Rummenigge (162)", "Dieter Müller (177)",
+        "Mario Gómez (177)", "Stefan Kuntz (179)", "Rudi Völler (134)",
+        "Miroslav Klose (121)",
     ],
 
-    # ── Goals – Ligue 1 ──────────────────────────────────────────────────────
+    # ── Ligue 1 ──────────────────────────────────────────────────────────────
     ("goals", "Ligue 1", 50): [
-        "Delio Onnis (299)", "Josip Skoblar (202)", "Bernard Lacombe (255)",
-        "Jean-Pierre Papin (159)", "Zlatan Ibrahimović (113)", "Edinson Cavani (138)",
-        "Kylian Mbappé (180+)", "Neymar (73)", "Wissam Ben Yedder (153+)",
-        "Alexandre Lacazette (100)", "Andy Delort (86)", "Bafétimbi Gomis (176)",
+        "Delio Onnis (299)", "Bernard Lacombe (255)", "Josip Skoblar (202)",
+        "Kylian Mbappé (180+)", "Bafétimbi Gomis (176)", "Jean-Pierre Papin (159)",
+        "Wissam Ben Yedder (153+)", "Edinson Cavani (138)",
+        "Alexandre Lacazette (100)", "Zlatan Ibrahimović (113)",
+        "Neymar (73)", "Andy Delort (86)", "Moussa Dembélé (100+)",
+        "Gonçalo Ramos (40+ — too few)",
     ],
     ("goals", "Ligue 1", 75): [
         "Delio Onnis (299)", "Bernard Lacombe (255)", "Josip Skoblar (202)",
-        "Edinson Cavani (138)", "Kylian Mbappé (180+)", "Bafétimbi Gomis (176)",
-        "Jean-Pierre Papin (159)", "Wissam Ben Yedder (153+)",
-        "Alexandre Lacazette (100)", "Zlatan Ibrahimović (113)",
+        "Kylian Mbappé (180+)", "Bafétimbi Gomis (176)", "Jean-Pierre Papin (159)",
+        "Wissam Ben Yedder (153+)", "Edinson Cavani (138)",
+        "Zlatan Ibrahimović (113)", "Alexandre Lacazette (100)",
+        "Moussa Dembélé (100+)",
     ],
 
-    # ── Goals – Champions League ──────────────────────────────────────────────
+    # ── Champions League ─────────────────────────────────────────────────────
     ("goals", "Champions League", 20): [
         "Cristiano Ronaldo (140)", "Lionel Messi (129)", "Robert Lewandowski (91)",
         "Karim Benzema (90)", "Raúl (71)", "Ruud van Nistelrooy (56)",
-        "Thomas Müller (53)", "Thierry Henry (50)", "Andriy Shevchenko (48)",
-        "Zlatan Ibrahimović (48)", "Didier Drogba (44)", "Edin Džeko (35)",
-        "Filippo Inzaghi (46)", "Fernando Morientes (33)", "Mo Salah (46+)",
-        "Erling Haaland (45+)", "Vinicius Jr (25+)", "Kylian Mbappé (42+)",
+        "Thomas Müller (53)", "Thierry Henry (50)", "Filippo Inzaghi (46)",
+        "Andriy Shevchenko (48)", "Zlatan Ibrahimović (48)",
+        "Mo Salah (46+)", "Erling Haaland (45+)", "Kylian Mbappé (42+)",
+        "Didier Drogba (44)", "Edin Džeko (35)", "Fernando Morientes (33)",
+        "Vinicius Jr (25+)", "Marcus Rashford (22)", "Romelu Lukaku (28)",
     ],
     ("goals", "Champions League", 30): [
         "Cristiano Ronaldo (140)", "Lionel Messi (129)", "Robert Lewandowski (91)",
         "Karim Benzema (90)", "Raúl (71)", "Ruud van Nistelrooy (56)",
-        "Thomas Müller (53)", "Andriy Shevchenko (48)", "Zlatan Ibrahimović (48)",
-        "Thierry Henry (50)", "Filippo Inzaghi (46)", "Erling Haaland (45+)",
-        "Mo Salah (46+)", "Kylian Mbappé (42+)",
+        "Thomas Müller (53)", "Thierry Henry (50)", "Andriy Shevchenko (48)",
+        "Zlatan Ibrahimović (48)", "Filippo Inzaghi (46)", "Mo Salah (46+)",
+        "Erling Haaland (45+)", "Kylian Mbappé (42+)", "Didier Drogba (44)",
     ],
 
-    # ── Assists – career global ───────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ASSISTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # ── career ───────────────────────────────────────────────────────────────
     ("assists", "career", 50): [
         "Lionel Messi", "Cristiano Ronaldo", "Kevin De Bruyne", "Toni Kroos",
         "Luka Modrić", "Cesc Fàbregas", "Ryan Giggs", "David Beckham",
         "Angel Di María", "Mesut Özil", "Frank Lampard", "Steven Gerrard",
-        "Paul Scholes", "Thierry Henry", "Dennis Bergkamp",
+        "Paul Scholes", "Thierry Henry", "Dennis Bergkamp", "Robert Pires",
+        "Andrés Iniesta", "Xavi", "Juan Mata", "Thomas Müller",
     ],
     ("assists", "career", 100): [
         "Lionel Messi", "Cristiano Ronaldo", "Kevin De Bruyne",
         "Cesc Fàbregas", "Ryan Giggs", "Angel Di María", "Mesut Özil",
+        "Toni Kroos", "Thomas Müller", "Andrés Iniesta", "Xavi",
     ],
+
+    # ── Premier League ───────────────────────────────────────────────────────
     ("assists", "Premier League", 25): [
-        "Ryan Giggs (162)", "Cesc Fàbregas (111)", "Wayne Rooney (103)",
-        "Frank Lampard (102)", "Andrew Cole (92)", "Steven Gerrard (92)",
-        "Kevin De Bruyne (110+)", "Mesut Özil (77)", "Dennis Bergkamp (94)",
-        "Robert Pires (73)", "David Beckham (80)", "Paul Scholes (55)",
+        "Ryan Giggs (162)", "Kevin De Bruyne (110+)", "Cesc Fàbregas (111)",
+        "Wayne Rooney (103)", "Frank Lampard (102)", "Dennis Bergkamp (94)",
+        "Steven Gerrard (92)", "Andrew Cole (92)", "David Beckham (80)",
+        "Robert Pires (73)", "Mesut Özil (77)", "Paul Scholes (55)",
+        "James Milner (90+)", "Trent Alexander-Arnold (90+)",
+        "Harry Kane (160+)", "Leroy Sané (35)",
     ],
     ("assists", "Premier League", 50): [
         "Ryan Giggs (162)", "Kevin De Bruyne (110+)", "Cesc Fàbregas (111)",
         "Wayne Rooney (103)", "Frank Lampard (102)", "Dennis Bergkamp (94)",
-        "Steven Gerrard (92)", "Andrew Cole (92)", "David Beckham (80)",
+        "Steven Gerrard (92)", "James Milner (90+)",
+        "Trent Alexander-Arnold (90+)", "Harry Kane (160+)",
+        "David Beckham (80)", "Mesut Özil (77)",
     ],
 
-    # ── Clean sheets – career global ──────────────────────────────────────────
+    # ── La Liga ──────────────────────────────────────────────────────────────
+    ("assists", "La Liga", 25): [
+        "Lionel Messi (200+)", "Xavi (168)", "Andrés Iniesta (130+)",
+        "Isco (90+)", "Toni Kroos (100+)", "Luka Modrić (80+)",
+        "David Beckham (30+)", "Mesut Özil (40+)", "Dani Alves (50+)",
+        "Jordi Alba (100+)", "Angel Di María (40+)", "Luis Suárez (70+)",
+        "Cesc Fàbregas (60+)", "Pedro (50+)", "Karim Benzema (80+)",
+        "Vinicius Jr (60+)", "Marco Asensio (40+)",
+    ],
+    ("assists", "La Liga", 50): [
+        "Lionel Messi (200+)", "Xavi (168)", "Andrés Iniesta (130+)",
+        "Toni Kroos (100+)", "Jordi Alba (100+)", "Isco (90+)",
+        "Luka Modrić (80+)", "Karim Benzema (80+)", "Luis Suárez (70+)",
+        "Cesc Fàbregas (60+)", "Vinicius Jr (60+)", "Pedro (50+)",
+        "Dani Alves (50+)",
+    ],
+
+    # ── Serie A ──────────────────────────────────────────────────────────────
+    ("assists", "Serie A", 25): [
+        "Roberto Baggio (100+)", "Francesco Totti (150+)", "Alessandro Del Piero (100+)",
+        "Paulo Dybala (80+)", "Lorenzo Insigne (80+)", "Dries Mertens (70+)",
+        "Ciro Immobile (60+)", "Marek Hamšík (100+)", "Zlatan Ibrahimović (40+)",
+        "Nicolò Barella (70+)", "Lautaro Martínez (50+)", "Edin Džeko (60+)",
+        "Antonio Di Natale (70+)", "Felipe Melo (30+)", "Andrea Pirlo (80+)",
+        "Gianfranco Zola (50+)", "Del Piero (100+)",
+    ],
+    ("assists", "Serie A", 50): [
+        "Francesco Totti (150+)", "Roberto Baggio (100+)", "Alessandro Del Piero (100+)",
+        "Marek Hamšík (100+)", "Andrea Pirlo (80+)", "Paulo Dybala (80+)",
+        "Lorenzo Insigne (80+)", "Dries Mertens (70+)", "Nicolò Barella (70+)",
+        "Antonio Di Natale (70+)", "Edin Džeko (60+)", "Lautaro Martínez (50+)",
+        "Gianfranco Zola (50+)",
+    ],
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CLEAN SHEETS  (goalkeepers only)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # ── career ───────────────────────────────────────────────────────────────
     ("clean_sheets", "career", 50): [
-        "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel", "Edwin van der Sar",
-        "Oliver Kahn", "Manuel Neuer", "David de Gea", "Pepe Reina",
-        "Joe Hart", "Thibaut Courtois", "Hugo Lloris", "Alisson Becker",
-        "Ederson", "Kasper Schmeichel", "Gianluigi Donnarumma",
-        "Victor Valdés", "Claudio Bravo", "David Seaman", "Neville Southall",
-        "Pat Jennings", "Gordon Banks",
+        "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel",
+        "Edwin van der Sar", "Oliver Kahn", "Manuel Neuer", "David de Gea",
+        "Pepe Reina", "Joe Hart", "Thibaut Courtois", "Hugo Lloris",
+        "Alisson Becker", "Ederson", "Kasper Schmeichel",
+        "Gianluigi Donnarumma", "Victor Valdés", "Claudio Bravo",
+        "David Seaman", "Neville Southall", "Pat Jennings", "Gordon Banks",
+        "Brad Friedel", "Mark Schwarzer", "Tim Howard", "Shay Given",
     ],
     ("clean_sheets", "career", 100): [
-        "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel", "Edwin van der Sar",
-        "Oliver Kahn", "Manuel Neuer", "Thibaut Courtois", "Hugo Lloris",
-        "Pepe Reina", "David de Gea",
+        "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel",
+        "Edwin van der Sar", "Oliver Kahn", "Manuel Neuer",
+        "Thibaut Courtois", "Hugo Lloris", "Pepe Reina", "David de Gea",
+        "Alisson Becker", "Joe Hart", "Brad Friedel", "Mark Schwarzer",
     ],
+
+    # ── Premier League ───────────────────────────────────────────────────────
     ("clean_sheets", "Premier League", 30): [
         "Pepe Reina (172)", "David de Gea (163)", "Joe Hart (159)",
-        "Peter Schmeichel (141)", "Edwin van der Sar (131)", "Thibaut Courtois (109)",
-        "Alisson Becker (140+)", "Hugo Lloris (130+)", "Rob Green (96)",
-        "Mark Schwarzer (107)", "Tim Howard (96)", "Brad Friedel (136)",
+        "Brad Friedel (136)", "Peter Schmeichel (141)", "Alisson Becker (140+)",
+        "Edwin van der Sar (131)", "Hugo Lloris (130+)", "Mark Schwarzer (107)",
+        "Thibaut Courtois (109)", "Tim Howard (96)", "Rob Green (96)",
+        "Shay Given (77)", "Nigel Martyn (83)", "David James (169)",
     ],
     ("clean_sheets", "Premier League", 50): [
-        "Pepe Reina (172)", "David de Gea (163)", "Joe Hart (159)",
-        "Brad Friedel (136)", "Peter Schmeichel (141)", "Alisson Becker (140+)",
-        "Edwin van der Sar (131)", "Hugo Lloris (130+)", "Thibaut Courtois (109)",
-        "Mark Schwarzer (107)",
+        "Pepe Reina (172)", "David James (169)", "David de Gea (163)",
+        "Joe Hart (159)", "Peter Schmeichel (141)", "Alisson Becker (140+)",
+        "Brad Friedel (136)", "Edwin van der Sar (131)", "Hugo Lloris (130+)",
+        "Thibaut Courtois (109)", "Mark Schwarzer (107)",
+    ],
+
+    # ── La Liga ──────────────────────────────────────────────────────────────
+    ("clean_sheets", "La Liga", 30): [
+        "Iker Casillas (200+)", "Andoni Zubizarreta (170+)",
+        "Victor Valdés (150+)", "Santiago Cañizares (120+)",
+        "Thibaut Courtois (100+)", "Keylor Navas (80+)",
+        "Diego López (60+)", "Claudio Bravo (80+)",
+        "Jan Oblak (200+)", "Geronimo Rulli (40+)",
+        "Unai Simón (70+)", "David de Gea (60+)",
+    ],
+    ("clean_sheets", "La Liga", 50): [
+        "Iker Casillas (200+)", "Jan Oblak (200+)",
+        "Andoni Zubizarreta (170+)", "Victor Valdés (150+)",
+        "Santiago Cañizares (120+)", "Thibaut Courtois (100+)",
+        "Claudio Bravo (80+)", "Keylor Navas (80+)",
+        "Diego López (60+)", "David de Gea (60+)",
+    ],
+
+    # ── Serie A ──────────────────────────────────────────────────────────────
+    ("clean_sheets", "Serie A", 30): [
+        "Gianluigi Buffon (300+)", "Dino Zoff (270+)", "Sebastiano Rossi (130+)",
+        "Angelo Peruzzi (120+)", "Francesco Toldo (110+)",
+        "Samir Handanović (150+)", "Gianluigi Donnarumma (100+)",
+        "Walter Zenga (100+)", "Alex Meret (70+)",
+        "Pierluigi Gollini (50+)", "Mike Maignan (80+)",
+    ],
+    ("clean_sheets", "Serie A", 50): [
+        "Gianluigi Buffon (300+)", "Dino Zoff (270+)",
+        "Samir Handanović (150+)", "Sebastiano Rossi (130+)",
+        "Angelo Peruzzi (120+)", "Francesco Toldo (110+)",
+        "Gianluigi Donnarumma (100+)", "Walter Zenga (100+)",
+        "Mike Maignan (80+)",
+    ],
+
+    # ── Bundesliga ───────────────────────────────────────────────────────────
+    ("clean_sheets", "Bundesliga", 30): [
+        "Oliver Kahn (200+)", "Sepp Maier (180+)", "Jens Lehmann (100+)",
+        "Manuel Neuer (200+)", "Timo Hildebrand (80+)",
+        "Sven Ulreich (60+)", "Marc-André ter Stegen (40+)",
+        "Roman Weidenfeller (80+)", "René Adler (50+)",
+        "Bernd Leno (60+)", "Kevin Trapp (50+)",
+    ],
+    ("clean_sheets", "Bundesliga", 50): [
+        "Oliver Kahn (200+)", "Manuel Neuer (200+)", "Sepp Maier (180+)",
+        "Jens Lehmann (100+)", "Roman Weidenfeller (80+)",
+        "Timo Hildebrand (80+)", "Bernd Leno (60+)",
+        "Sven Ulreich (60+)", "Kevin Trapp (50+)", "René Adler (50+)",
+    ],
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # BOOKINGS  (career global only — generator only produces Global scope)
+    # ═══════════════════════════════════════════════════════════════════════════
+    ("bookings", "career", 40): [
+        "Sergio Ramos", "Zlatan Ibrahimović", "Pepe", "Giorgio Chiellini",
+        "Roy Keane", "Patrick Vieira", "Diego Simeone", "Vinnie Jones",
+        "Marco Materazzi", "Edgar Davids", "Nigel de Jong",
+        "Kevin-Prince Boateng", "Gennaro Gattuso", "Miralem Pjanić",
+        "Marcos Rojo", "Dani Alves", "Javier Mascherano",
+        "Nemanja Vidić", "Robert Huth", "Joey Barton",
+    ],
+    ("bookings", "career", 70): [
+        "Sergio Ramos", "Zlatan Ibrahimović", "Pepe", "Giorgio Chiellini",
+        "Roy Keane", "Patrick Vieira", "Gennaro Gattuso",
+        "Diego Simeone", "Marco Materazzi", "Edgar Davids",
+        "Nigel de Jong", "Javier Mascherano", "Dani Alves",
+    ],
+    ("bookings", "career", 100): [
+        "Sergio Ramos", "Pepe", "Giorgio Chiellini",
+        "Zlatan Ibrahimović", "Roy Keane", "Gennaro Gattuso",
+        "Edgar Davids", "Javier Mascherano",
     ],
 }
 
@@ -872,6 +1020,8 @@ def resolve_answers(task_text: str) -> dict:
         stat_kw = "clean_sheets"
     elif "assists" in t:
         stat_kw = "assists"
+    elif "bookings" in t:
+        stat_kw = "bookings"
     elif "goals" in t:
         stat_kw = "goals"
 
