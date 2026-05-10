@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import re
 import pandas as pd
+import requests
 
 # --- 1. DATA MAPPING ---
 CLUB_IDS = {
@@ -506,6 +507,110 @@ def fetch_club_players_nationality(club: str, nationality: str) -> list[str]:
         pass
     return []
 
+# Wikidata QIDs for each competition we generate trophy questions about.
+# When a new winner is added on Wikidata (usually within days of the final),
+# it shows up automatically in results — no code changes needed.
+WIKIDATA_COMPETITION_QIDS = {
+    "Champions League": "Q18123741",  # UEFA Champions League (season-level)
+    "Europa League":    "Q18024952",
+    "Premier League":   "Q18091908",
+    "FA Cup":           "Q192145",
+    "La Liga":          "Q18091865",
+    "Serie A":          "Q18091899",
+    "Bundesliga":       "Q18091869",
+    "Ligue 1":          "Q18091875",
+    "World Cup":        "Q18123741",  # overridden below — separate query
+    "Euros":            "Q12548",
+    "Copa America":     "Q35765",
+}
+
+# Separate QIDs for the competition itself (used for team-winner queries)
+WIKIDATA_COMP_INSTANCE_QIDS = {
+    "Champions League": "Q37186",
+    "Europa League":    "Q193796",
+    "Premier League":   "Q9448",
+    "FA Cup":           "Q51457",
+    "La Liga":          "Q324994",
+    "Serie A":          "Q15804",
+    "Bundesliga":       "Q82595",
+    "Ligue 1":          "Q31867",
+    "World Cup":        "Q19317",
+    "Euros":            "Q12548",
+    "Copa America":     "Q35765",
+}
+
+_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+_SPARQL_HEADERS  = {
+    "Accept": "application/sparql-results+json",
+    "User-Agent": "FootballTrivia/1.0 (streamlit app)",
+}
+
+@st.cache_data(ttl=43200, show_spinner=False)   # refresh every 12 h
+def fetch_trophy_teams_wikidata(competition: str) -> list[str]:
+    """
+    Return all clubs that have won a competition, via Wikidata SPARQL.
+    P31  = instance of  → season/edition item
+    P179 = part of series → the competition series
+    P1346 = winner
+    """
+    comp_qid = WIKIDATA_COMP_INSTANCE_QIDS.get(competition)
+    if not comp_qid:
+        return []
+    sparql = f"""
+SELECT DISTINCT ?winnerLabel WHERE {{
+  ?edition wdt:P31/wdt:P279* wd:{comp_qid} .
+  ?edition wdt:P1346 ?winner .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+}}
+ORDER BY ?winnerLabel
+"""
+    try:
+        resp = requests.get(
+            _SPARQL_ENDPOINT,
+            params={"query": sparql, "format": "json"},
+            headers=_SPARQL_HEADERS,
+            timeout=10,
+        )
+        data = resp.json()
+        return [b["winnerLabel"]["value"] for b in data["results"]["bindings"]]
+    except Exception:
+        return []
+
+
+@st.cache_data(ttl=43200, show_spinner=False)
+def fetch_trophy_players_wikidata(competition: str) -> list[str]:
+    """
+    Return players who have won a competition medal, via Wikidata.
+    Uses P awarded (P166) or P participant (P710) on the edition items,
+    filtered to humans (Q5).  Falls back to static list if SPARQL is slow/empty.
+    """
+    comp_qid = WIKIDATA_COMP_INSTANCE_QIDS.get(competition)
+    if not comp_qid:
+        return []
+    sparql = f"""
+SELECT DISTINCT ?playerLabel WHERE {{
+  ?edition wdt:P31/wdt:P279* wd:{comp_qid} .
+  ?edition wdt:P1346 ?winnerClub .
+  ?player wdt:P54 ?winnerClub ;
+          wdt:P31 wd:Q5 .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+}}
+LIMIT 300
+"""
+    try:
+        resp = requests.get(
+            _SPARQL_ENDPOINT,
+            params={"query": sparql, "format": "json"},
+            headers=_SPARQL_HEADERS,
+            timeout=12,
+        )
+        data = resp.json()
+        players = [b["playerLabel"]["value"] for b in data["results"]["bindings"]]
+        return players if players else []
+    except Exception:
+        return []
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. MASTER ANSWER RESOLVER
 # ─────────────────────────────────────────────────────────────────────────────
@@ -544,9 +649,8 @@ def resolve_answers(task_text: str) -> dict:
             result["note"] = "No preset data — try a web search"
         return result
 
-    # ── "[Nationality] player who played for [Club]" ─────────────────────────
+    # Detect nationality and club early — used by several branches below
     nat_match = None
-    found_nat = None
     for nat in COUNTRY_DATA:
         if nat.lower() in t:
             nat_match = nat
@@ -556,6 +660,8 @@ def resolve_answers(task_text: str) -> dict:
         if club.lower() in t:
             club_match = club
             break
+
+    # ── "[Nationality] player who played for [Club]" ─────────────────────────
     if nat_match and club_match and ("played for" in t or "who" in t):
         players = fetch_club_players_nationality(club_match, nat_match)
         result["answers"] = players
@@ -577,34 +683,78 @@ def resolve_answers(task_text: str) -> dict:
             result["note"] = "Primary home kit only"
             return result
 
-    # ── "team that has won [Trophy]" ─────────────────────────────────────────
+    # ── "team that has won [Trophy]" — live via Wikidata ─────────────────────
     if "team" in t and "won" in t:
-        for trophy, teams in TROPHY_TEAM_ANSWERS.items():
+        for trophy in WIKIDATA_COMP_INSTANCE_QIDS:
             if trophy.lower() in t:
-                result["answers"] = teams
-                return result
-
-    # ── "player who has won [Trophy]" ────────────────────────────────────────
-    if ("player" in t or nat_match) and "won" in t:
-        for trophy, players in PLAYER_TROPHY_ANSWERS.items():
-            if trophy.lower() in t:
-                # If nationality is also specified, filter
-                if nat_match:
-                    result["answers"] = players  # full list (manual filter not reliable)
-                    result["note"] = f"Filter to {nat_match} players"
+                live = fetch_trophy_teams_wikidata(trophy)
+                if live:
+                    result["answers"] = live
+                    result["note"] = "Live from Wikidata — updates after each final"
                 else:
-                    result["answers"] = players
+                    result["answers"] = TROPHY_TEAM_ANSWERS.get(trophy, [])
+                    result["note"] = "Static list (Wikidata unavailable)"
                 return result
 
-    # ── "N+ goals/assists/etc." ──────────────────────────────────────────────
+    # ── "player who has won [Trophy]" — live via Wikidata ────────────────────
+    if ("player" in t or nat_match) and "won" in t:
+        for trophy in WIKIDATA_COMP_INSTANCE_QIDS:
+            if trophy.lower() in t:
+                live = fetch_trophy_players_wikidata(trophy)
+                static = PLAYER_TROPHY_ANSWERS.get(trophy, [])
+                # Merge: live first, then any static names not already present
+                combined = list(dict.fromkeys(live + static)) if live else static
+                result["answers"] = combined
+                if nat_match:
+                    result["note"] = f"Filter to {nat_match} players — live from Wikidata"
+                else:
+                    result["note"] = "Live from Wikidata — updates after each final"
+                return result
+
+    # ── "[Nationality] player with N+ goals in [League]" (template type 11) ──
+    # e.g. "Name a French player who has 50+ goals in La Liga"
+    if nat_match and re.search(r"\d+\+", t) and "goals" in t:
+        n_match = re.search(r"(\d+)\+", t)
+        n = int(n_match.group(1)) if n_match else 50
+        # Find which league is mentioned
+        league_hit = None
+        for trophy in ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]:
+            if trophy.lower() in t:
+                league_hit = trophy
+                break
+        # Pull all historical scorers for that nationality at clubs in that league
+        # by combining FBref nat+club lookups across the main clubs for that league
+        LEAGUE_CLUBS = {
+            "Premier League": ["Man Utd", "Liverpool", "Arsenal", "Chelsea", "Man City", "Tottenham", "Aston Villa", "Newcastle"],
+            "La Liga":        ["Real Madrid", "Barcelona", "Atletico Madrid", "Sevilla"],
+            "Serie A":        ["AC Milan", "Juventus", "Inter Milan", "AS Roma", "Napoli"],
+            "Bundesliga":     ["Bayern Munich", "Dortmund"],
+            "Ligue 1":        ["PSG", "Marseille", "Lyon", "Monaco"],
+        }
+        clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
+        players = []
+        for c in clubs_to_check:
+            players.extend(fetch_club_players_nationality(c, nat_match))
+        # Deduplicate while preserving order
+        seen = set()
+        unique_players = []
+        for p in players:
+            if p.lower() not in seen:
+                seen.add(p.lower())
+                unique_players.append(p)
+        result["answers"] = unique_players
+        league_label = league_hit or "that league"
+        result["note"] = f"{nat_match} players who appeared at top {league_label} clubs — check goal tallies individually"
+        return result
+
+    # ── Generic "N+ goals/assists/clean sheets" ──────────────────────────────
     stat_keys = {"goals": "Goals", "assists": "Assists", "clean sheets": "Clean Sheets"}
     for kw, stat_name in stat_keys.items():
         if kw in t:
             n_match = re.search(r"(\d+)\+", t)
             n = int(n_match.group(1)) if n_match else 0
-            # Pick the right static bucket
             if "champions league" in t or " cl " in t:
-                key = f"20+ CL Goals"
+                key = "20+ CL Goals"
             elif n >= 200:
                 key = "200+ Goals career"
             elif n >= 100 and stat_name == "Goals":
@@ -616,7 +766,7 @@ def resolve_answers(task_text: str) -> dict:
             elif n >= 50 and stat_name == "Clean Sheets":
                 key = "50+ Clean Sheets career"
             else:
-                key = f"50+ Goals league"  # closest fallback
+                key = "50+ Goals league"
             result["answers"] = STAT_ANSWERS.get(key, [])
             result["note"] = f"Players with {n}+ {stat_name.lower()} (examples)"
             return result
@@ -898,8 +1048,20 @@ else:
 
             # ── ANSWERS SECTION ──────────────────────────────────────────────
             ans_data = resolve_answers(task_text)
-            answers = ans_data.get("answers", [])
+            raw_answers = ans_data.get("answers", [])
             note = ans_data.get("note", "")
+
+            # Deduplicate: strip anything in parentheses before comparing so
+            # "Louis van Gaal" and "Louis van Gaal (1st spell)" count as one.
+            # Keep the first (most recent) occurrence, discard later duplicates.
+            seen_keys = set()
+            answers = []
+            for ans in raw_answers:
+                key = re.sub(r"\s*\(.*?\)", "", ans).strip().lower()
+                if key not in seen_keys:
+                    seen_keys.add(key)
+                    answers.append(ans)
+
             expander_label = f"👁️ View Answers ({len(answers)})" if answers else "👁️ View Answers"
 
             with st.expander(expander_label):
