@@ -5,13 +5,19 @@ import pandas as pd
 import requests
 
 # --- 1. DATA MAPPING ---
+# FBref numeric club IDs — used by BOTH the club-vs-club and nationality-at-club
+# scraper functions with the ?level=franch URL format.
+# Sourced from FBref club page URLs: fbref.com/en/squads/{NUMERIC_ID}/...
 CLUB_IDS = {
-    "Man Utd": "19538871", "Liverpool": "822bd0ba", "Arsenal": "18bb7c10", 
-    "Chelsea": "cff3d3bb", "Man City": "b8fd03ef", "Tottenham": "3ad23a75",
-    "Aston Villa": "860223d1", "Newcastle": "b1b71fcb", "Real Madrid": "5324c30a", 
-    "Barcelona": "206d9d25", "Atletico Madrid": "db3b5483", "Sevilla": "ad2be748",
-    "AC Milan": "e2d42690", "Juventus": "e2d42690", "Inter Milan": "d60ad303",
-    "Bayern Munich": "054fdde2", "PSG": "e2d8892c"
+    "Man Utd":        "19538871", "Liverpool":      "164575",  "Arsenal":        "153995",
+    "Chelsea":        "cff3d3bb", "Man City":       "b8fd03ef","Tottenham":      "157033",
+    "Aston Villa":    "164959",   "Newcastle":      "b2b91eca","Real Madrid":    "159928",
+    "Barcelona":      "154774",   "Atletico Madrid":"173488",  "Sevilla":        "ad2be748",
+    "AC Milan":       "173603",   "Juventus":       "e0652b08","Inter Milan":    "172965",
+    "Bayern Munich":  "054fdde2", "PSG":            "174223",  "Dortmund":       "add600a5",
+    "Ajax":           "a96ecf6e", "Porto":          "5f43e2c5","Benfica":        "f8ca3df0",
+    "Sporting CP":    "afd5e9dc", "Napoli":         "d348d1a8","AS Roma":        "cf74a709",
+    "Marseille":      "f74cd1e4", "Lyon":           "f4ede454","Monaco":         "fd6114db",
 }
 
 COUNTRY_DATA = {
@@ -75,60 +81,71 @@ STADIUM_ANSWERS = {
         "Stamford Bridge (Chelsea)", "Etihad Stadium (Man City)", "Tottenham Hotspur Stadium",
         "Villa Park (Aston Villa)", "St. James' Park (Newcastle)", "Goodison Park (Everton)",
         "Elland Road (Leeds)", "Molineux (Wolves)", "London Stadium (West Ham)",
-        "Selhurst Park (Crystal Palace)", "The Amex (Brighton)", "Portman Road (Ipswich)",
-        "Bramall Lane (Sheffield Utd)", "Craven Cottage (Fulham)", "Dean Court (Bournemouth)"
+        "Selhurst Park (Crystal Palace)", "Amex Stadium (Brighton)", "Portman Road (Ipswich)",
+        "Bramall Lane (Sheffield Utd)", "Craven Cottage (Fulham)", "Vitality Stadium (Bournemouth)",
+        "King Power Stadium (Leicester)", "Turf Moor (Burnley)", "Carrow Road (Norwich)",
+        "Gtech Community Stadium (Brentford)", "City Ground (Nottingham Forest)",
+        "St. Mary's Stadium (Southampton)", "Hillsborough (Sheffield Wednesday)",
+        "Loftus Road (QPR)", "The Den (Millwall)", "Pride Park (Derby County)",
+        "Wembley Stadium", "Riverside Stadium (Middlesbrough)", "bet365 Stadium (Stoke)",
     ],
     "Spain": [
-        "Santiago Bernabéu (Real Madrid)", "Camp Nou / Estadi Olímpic (Barcelona)",
-        "Wanda Metropolitano (Atlético Madrid)", "Ramón Sánchez-Pizjuán (Sevilla)",
+        "Santiago Bernabéu (Real Madrid)", "Estadi Olímpic Lluís Companys (Barcelona)",
+        "Civitas Metropolitano (Atlético Madrid)", "Ramón Sánchez-Pizjuán (Sevilla)",
         "Mestalla (Valencia)", "San Mamés (Athletic Bilbao)", "Estadio de la Cerámica (Villarreal)",
         "El Sadar (Osasuna)", "Reale Arena (Real Sociedad)", "Balaídos (Celta Vigo)",
-        "Coliseum (Getafe)", "Estadio Benito Villamarín (Betis)"
+        "Coliseum (Getafe)", "Estadio Benito Villamarín (Betis)", "Riyadh Air Metropolitano (Atlético)",
     ],
     "Germany": [
         "Allianz Arena (Bayern Munich)", "Signal Iduna Park (Dortmund)",
-        "BayArena (Leverkusen)", "Volksparkstadion (Hamburg)", "Mercedes-Benz Arena (Stuttgart)",
+        "BayArena (Leverkusen)", "Volksparkstadion (Hamburg)", "MHPArena (Stuttgart)",
         "Deutsche Bank Park (Eintracht Frankfurt)", "RheinEnergieStadion (Cologne)",
-        "Red Bull Arena (RB Leipzig)", "Volkswagen Arena (Wolfsburg)"
+        "Red Bull Arena (RB Leipzig)", "Volkswagen Arena (Wolfsburg)",
+        "PreZero Arena (Hoffenheim)", "MEWA Arena (Mainz)",
     ],
     "Italy": [
-        "San Siro / Giuseppe Meazza (AC Milan & Inter)", "Juventus Stadium (Juventus)",
+        "San Siro / Giuseppe Meazza (AC Milan & Inter)", "Juventus Stadium / Allianz Stadium (Juventus)",
         "Stadio Olimpico (Roma & Lazio)", "Diego Armando Maradona (Napoli)",
         "Gewiss Stadium (Atalanta)", "Artemio Franchi (Fiorentina)",
-        "Luigi Ferraris (Sampdoria & Genoa)", "Ferraris (Genoa)"
+        "Luigi Ferraris (Sampdoria & Genoa)", "Unipol Domus (Cagliari)",
     ],
     "France": [
-        "Parc des Princes (PSG)", "Vélodrome (Marseille)", "Groupama Stadium (Lyon)",
+        "Parc des Princes (PSG)", "Orange Vélodrome (Marseille)", "Groupama Stadium (Lyon)",
         "Roazhon Park (Rennes)", "Stade Louis-II (Monaco)", "Stade de la Beaujoire (Nantes)",
-        "Stade Auguste-Delaune (Reims)", "Stade Pierre-Mauroy (Lille)"
+        "Stade Auguste-Delaune (Reims)", "Stade Pierre-Mauroy (Lille)",
+        "Allianz Riviera (Nice)", "Stade de France",
     ],
     "Portugal": [
         "Estádio da Luz (Benfica)", "Estádio do Dragão (Porto)",
-        "Estádio José Alvalade (Sporting CP)", "Estádio Municipal de Braga"
+        "Estádio José Alvalade (Sporting CP)", "Estádio Municipal de Braga",
+        "Estádio D. Afonso Henriques (Vitória SC)",
     ],
     "Brazil": [
         "Maracanã (Flamengo / Fluminense)", "Allianz Parque (Palmeiras)",
-        "Arena Corinthians (Corinthians)", "Morumbi (São Paulo)",
-        "Arena da Baixada (Athletico Paranaense)", "Estádio Mineirão (Atlético Mineiro / Cruzeiro)"
+        "Neo Química Arena (Corinthians)", "MorumBIS (São Paulo)",
+        "Arena da Baixada (Athletico Paranaense)", "Estádio Mineirão (Atlético Mineiro / Cruzeiro)",
+        "Arena MRV (Atlético Mineiro)",
     ],
     "Argentina": [
         "La Bombonera (Boca Juniors)", "El Monumental (River Plate)",
         "Estadio Único Ciudad de La Plata (Gimnasia / Estudiantes)",
-        "Estadio Marcelo Bielsa (Newell's Old Boys)"
+        "Estadio Marcelo Bielsa (Newell's Old Boys)", "Estadio Padre Ernesto Martearena (Salta)",
     ],
     "Mexico": [
-        "Estadio Azteca (América / Cruzazul)", "Estadio BBVA (Monterrey)",
-        "Estadio Jalisco (Atlas / Chivas — old)", "Estadio Akron (Guadalajara)",
-        "Estadio Ciudad de los Deportes (Cruz Azul)"
+        "Estadio Azteca (América / Cruz Azul)", "Estadio BBVA (Monterrey)",
+        "Estadio Akron (Guadalajara)", "Estadio Ciudad de los Deportes (Cruz Azul)",
+        "Estadio Nemesio Díez (Toluca)", "Estadio Victoria (Aguascalientes)",
     ],
 }
 
 KIT_ANSWERS = {
     "Red": [
         "Man Utd", "Liverpool", "Arsenal", "AC Milan", "Bayern Munich",
-        "Atletico Madrid", "Flamengo", "River Plate (away)", "Benfica",
-        "AS Roma", "Nottingham Forest", "Sheffield Utd", "Brentford",
-        "Southampton", "Wrexham", "Bristol City", "Middlesbrough"
+        "Atletico Madrid", "Flamengo", "Benfica", "AS Roma",
+        "Nottingham Forest", "Sheffield Utd", "Brentford",
+        "Southampton", "Wrexham", "Bristol City", "Middlesbrough",
+        "Sparta Prague", "Urawa Red Diamonds", "Independiente",
+        "River Plate", "Osasuna", "Rayo Vallecano",
     ],
     "Blue": [
         "Chelsea", "Man City", "Inter Milan", "Porto", "Everton",
@@ -274,20 +291,8 @@ FBREF_NAT_ISO3 = {
     "Japanese":    "JPN", "South Korean":"KOR", "Australian":  "AUS",
 }
 
-# FBref franchise/club NUMERIC IDs used in the ?level=franch&t1=NAT_XXX&t2=NUMERIC_ID URL.
-# These are DIFFERENT from the hex IDs in CLUB_IDS (which are for club-vs-club lookups).
-# Numeric IDs sourced from FBref club page URLs, e.g. fbref.com/en/squads/NUMERIC_ID/...
-FBREF_CLUB_IDS = {
-    "Man Utd":        "19538871", "Liverpool":      "164575",  "Arsenal":        "153995",
-    "Chelsea":        "cff3d3bb", "Man City":       "b8fd03ef","Tottenham":      "361ca564",
-    "Aston Villa":    "8602c90d", "Newcastle":      "b2b91eca","Real Madrid":    "159928",
-    "Barcelona":      "154774",   "Atletico Madrid":"173488",  "Sevilla":        "ad2be748",
-    "AC Milan":       "d48ad4ff", "Juventus":       "e0652b08","Inter Milan":    "d609edc0",
-    "Bayern Munich":  "054fdde2", "PSG":            "e2d8892c","Dortmund":       "add600a5",
-    "Ajax":           "a96ecf6e", "Porto":          "5f43e2c5","Benfica":        "f8ca3df0",
-    "Sporting CP":    "afd5e9dc", "Napoli":         "d348d1a8","AS Roma":        "cf74a709",
-    "Marseille":      "f74cd1e4", "Lyon":           "f4ede454","Monaco":         "fd6114db",
-}
+# FBREF_CLUB_IDS is an alias — CLUB_IDS now contains numeric IDs used by both fetchers.
+FBREF_CLUB_IDS = CLUB_IDS
 
 TROPHY_TEAM_ANSWERS = {
     "Champions League": [
@@ -452,7 +457,10 @@ STAT_ANSWERS = {
     "50+ Clean Sheets career": [
         "Gianluigi Buffon", "Iker Casillas", "Peter Schmeichel", "Edwin van der Sar",
         "Oliver Kahn", "Manuel Neuer", "David de Gea", "Pepe Reina",
-        "Joe Hart", "Thibaut Courtois", "Hugo Lloris"
+        "Joe Hart", "Thibaut Courtois", "Hugo Lloris", "Alisson Becker",
+        "Ederson", "Kasper Schmeichel", "Gianluigi Donnarumma",
+        "Victor Valdés", "Claudio Bravo", "David Seaman", "Neville Southall",
+        "Pat Jennings", "Gordon Banks", "Rene Higuita",
     ],
 }
 
@@ -462,12 +470,12 @@ STAT_ANSWERS = {
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_shared_players(club1, club2):
-    """Scrape FBref for players who played for both clubs."""
+    """Scrape FBref for players who played for both clubs using numeric franchise IDs."""
     id1, id2 = CLUB_IDS.get(club1), CLUB_IDS.get(club2)
     if not id1 or not id2:
         return []
     try:
-        url = f"https://fbref.com/en/friv/players-who-played-for-multiple-clubs-countries.fcgi?t1={id1}&t2={id2}"
+        url = f"https://fbref.com/en/friv/players-who-played-for-multiple-clubs-countries.fcgi?level=franch&t1={id1}&t2={id2}"
         storage_options = {'User-Agent': 'Mozilla/5.0 (compatible; FootballTrivia/1.0)'}
         tables = pd.read_html(url, storage_options=storage_options)
         if tables:
@@ -724,11 +732,37 @@ def resolve_answers(task_text: str) -> dict:
             return result
 
     # ── "player who has played in [Competition]" ─────────────────────────────
+    # When a nationality is specified ("Spanish players who played in the World Cup"),
+    # use FBref's nat+league club lookup as a proxy — we pull players of that nationality
+    # from the top clubs associated with that competition's winning nations.
+    # Without a nationality filter, use the curated static list.
     if "played in" in t:
         for trophy in PLAYER_TROPHY_ANSWERS:
             if trophy.lower() in t:
-                result["answers"] = PLAYER_TROPHY_ANSWERS[trophy]
-                result["note"] = "Players who have appeared in this competition"
+                if nat_match:
+                    # For international tournaments, map to FBref national team ID
+                    INTL_COMP_NAT_CLUBS = {
+                        "World Cup":    ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Arsenal", "Man City"],
+                        "Euros":        ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Arsenal", "Man City"],
+                        "Copa America": ["Real Madrid", "Barcelona", "Liverpool", "Man City", "PSG", "Atletico Madrid", "Juventus", "Inter Milan", "AC Milan"],
+                        "Champions League": ["Real Madrid", "Barcelona", "Bayern Munich", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Man City", "PSG"],
+                    }
+                    clubs_to_check = INTL_COMP_NAT_CLUBS.get(trophy, [])
+                    players = []
+                    for c in clubs_to_check:
+                        players.extend(fetch_club_players_nationality(c, nat_match))
+                    seen = set()
+                    unique_players = []
+                    for p in players:
+                        k = p.lower()
+                        if k not in seen:
+                            seen.add(k)
+                            unique_players.append(p)
+                    result["answers"] = unique_players
+                    result["note"] = f"{nat_match} players at top clubs — verify {trophy} appearances individually"
+                else:
+                    result["answers"] = PLAYER_TROPHY_ANSWERS[trophy]
+                    result["note"] = "Players who have appeared in this competition"
                 return result
 
     return result
