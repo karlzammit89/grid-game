@@ -581,6 +581,34 @@ ORDER BY ?winnerLabel
 # 4. MASTER ANSWER RESOLVER
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Top clubs per league/competition — used by multiple resolver branches to
+# gather nationality-filtered player lists from FBref. Ordered by prestige so
+# the most recognisable players appear first in results.
+LEAGUE_CLUBS = {
+    "Premier League":   ["Man Utd", "Liverpool", "Arsenal", "Chelsea", "Man City",
+                         "Tottenham", "Aston Villa", "Newcastle"],
+    "La Liga":          ["Real Madrid", "Barcelona", "Atletico Madrid", "Sevilla"],
+    "Serie A":          ["AC Milan", "Juventus", "Inter Milan", "AS Roma", "Napoli"],
+    "Bundesliga":       ["Bayern Munich", "Dortmund"],
+    "Ligue 1":          ["PSG", "Marseille", "Lyon", "Monaco"],
+    "Championship":     ["Leeds Utd", "Nottingham Forest", "Sheffield Utd",
+                         "Norwich City", "Brentford", "Watford"],
+    "Champions League": ["Real Madrid", "Barcelona", "Bayern Munich", "Liverpool",
+                         "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Man City", "PSG"],
+    "Europa League":    ["Sevilla", "Atletico Madrid", "Liverpool", "Man Utd",
+                         "Chelsea", "Arsenal", "Juventus"],
+    "World Cup":        ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG",
+                         "Liverpool", "Juventus", "Inter Milan", "AC Milan",
+                         "Chelsea", "Arsenal", "Man City"],
+    "Euros":            ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG",
+                         "Liverpool", "Juventus", "Inter Milan", "AC Milan",
+                         "Chelsea", "Arsenal", "Man City"],
+    "Copa America":     ["Real Madrid", "Barcelona", "Liverpool", "Man City", "PSG",
+                         "Atletico Madrid", "Juventus", "Inter Milan", "AC Milan"],
+    "FA Cup":           ["Man Utd", "Liverpool", "Arsenal", "Chelsea", "Man City",
+                         "Tottenham", "Aston Villa", "Newcastle"],
+}
+
 def resolve_answers(task_text: str) -> dict:
     """
     Parse the task text and return a dict:
@@ -676,26 +704,15 @@ def resolve_answers(task_text: str) -> dict:
     if nat_match and re.search(r"\d+\+", t) and "goals" in t:
         n_match = re.search(r"(\d+)\+", t)
         n = int(n_match.group(1)) if n_match else 50
-        # Find which league is mentioned
         league_hit = None
-        for trophy in ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]:
-            if trophy.lower() in t:
-                league_hit = trophy
+        for league in ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]:
+            if league.lower() in t:
+                league_hit = league
                 break
-        # Pull all historical scorers for that nationality at clubs in that league
-        # by combining FBref nat+club lookups across the main clubs for that league
-        LEAGUE_CLUBS = {
-            "Premier League": ["Man Utd", "Liverpool", "Arsenal", "Chelsea", "Man City", "Tottenham", "Aston Villa", "Newcastle"],
-            "La Liga":        ["Real Madrid", "Barcelona", "Atletico Madrid", "Sevilla"],
-            "Serie A":        ["AC Milan", "Juventus", "Inter Milan", "AS Roma", "Napoli"],
-            "Bundesliga":     ["Bayern Munich", "Dortmund"],
-            "Ligue 1":        ["PSG", "Marseille", "Lyon", "Monaco"],
-        }
         clubs_to_check = LEAGUE_CLUBS.get(league_hit, []) if league_hit else []
         players = []
         for c in clubs_to_check:
             players.extend(fetch_club_players_nationality(c, nat_match))
-        # Deduplicate while preserving order
         seen = set()
         unique_players = []
         for p in players:
@@ -704,7 +721,7 @@ def resolve_answers(task_text: str) -> dict:
                 unique_players.append(p)
         result["answers"] = unique_players
         league_label = league_hit or "that league"
-        result["note"] = f"{nat_match} players who appeared at top {league_label} clubs — check goal tallies individually"
+        result["note"] = f"{nat_match} players at top {league_label} clubs · check goal tallies individually"
         return result
 
     # ── Generic "N+ goals/assists/clean sheets" ──────────────────────────────
@@ -731,38 +748,38 @@ def resolve_answers(task_text: str) -> dict:
             result["note"] = f"Players with {n}+ {stat_name.lower()} (examples)"
             return result
 
-    # ── "player who has played in [Competition]" ─────────────────────────────
-    # When a nationality is specified ("Spanish players who played in the World Cup"),
-    # use FBref's nat+league club lookup as a proxy — we pull players of that nationality
-    # from the top clubs associated with that competition's winning nations.
-    # Without a nationality filter, use the curated static list.
+    # ── "[Nationality] player who has played in [League]" (template type 9) ───
+    # e.g. "Name a Dutch player who has played in La Liga"
+    # Triggered when: nationality detected + domestic league mentioned + "played in"
+    # Uses the same LEAGUE_CLUBS map as the stat branch — FBref returns players
+    # ordered by matches played, so the list is naturally sorted most→least.
+    if nat_match and "played in" in t:
+        league_hit = None
+        for league in LEAGUE_CLUBS:
+            if league.lower() in t:
+                league_hit = league
+                break
+        if league_hit:
+            players = []
+            for c in LEAGUE_CLUBS[league_hit]:
+                players.extend(fetch_club_players_nationality(c, nat_match))
+            seen = set()
+            unique_players = []
+            for p in players:
+                k = p.lower()
+                if k not in seen:
+                    seen.add(k)
+                    unique_players.append(p)
+            result["answers"] = unique_players
+            result["note"] = f"{nat_match} players at top {league_hit} clubs · ordered by appearances"
+            return result
+
+    # ── Generic "player who has played in [Competition]" (no nationality filter) ─
     if "played in" in t:
         for trophy in PLAYER_TROPHY_ANSWERS:
             if trophy.lower() in t:
-                if nat_match:
-                    # For international tournaments, map to FBref national team ID
-                    INTL_COMP_NAT_CLUBS = {
-                        "World Cup":    ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Arsenal", "Man City"],
-                        "Euros":        ["Real Madrid", "Barcelona", "Man Utd", "Bayern Munich", "PSG", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Arsenal", "Man City"],
-                        "Copa America": ["Real Madrid", "Barcelona", "Liverpool", "Man City", "PSG", "Atletico Madrid", "Juventus", "Inter Milan", "AC Milan"],
-                        "Champions League": ["Real Madrid", "Barcelona", "Bayern Munich", "Liverpool", "Juventus", "Inter Milan", "AC Milan", "Chelsea", "Man City", "PSG"],
-                    }
-                    clubs_to_check = INTL_COMP_NAT_CLUBS.get(trophy, [])
-                    players = []
-                    for c in clubs_to_check:
-                        players.extend(fetch_club_players_nationality(c, nat_match))
-                    seen = set()
-                    unique_players = []
-                    for p in players:
-                        k = p.lower()
-                        if k not in seen:
-                            seen.add(k)
-                            unique_players.append(p)
-                    result["answers"] = unique_players
-                    result["note"] = f"{nat_match} players at top clubs — verify {trophy} appearances individually"
-                else:
-                    result["answers"] = PLAYER_TROPHY_ANSWERS[trophy]
-                    result["note"] = "Players who have appeared in this competition"
+                result["answers"] = PLAYER_TROPHY_ANSWERS[trophy]
+                result["note"] = "Players who have appeared in this competition"
                 return result
 
     return result
